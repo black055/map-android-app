@@ -21,6 +21,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.SearchView;
 import android.widget.Toast;
 
@@ -54,7 +55,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private final int DEFAULT_MAP_HEIGHT = 17;
     private boolean locationPermissionGranted;
     private GoogleMap mMap;
-    private Button btnZoomIn, btnZoomOut, btnCurPosition;
+    private Geocoder geocoder;
+    private Button btnZoomIn, btnZoomOut;
+    private ImageView btnCurPosition;
     private Location lastLocation;
     private LatLng defaultLocation;
     private SearchView searchLocation;
@@ -63,10 +66,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        geocoder = new Geocoder(MapsActivity.this);
 
         btnZoomIn = findViewById(R.id.btnZoomIn);
         btnZoomOut = findViewById(R.id.btnZoomOut);
@@ -80,22 +85,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } else locationPermissionGranted = false;
         // Tọa độ mặc định của ứng dụng
         defaultLocation = new LatLng(10.8759, 106.7992);
-
-        /*searchLocation.setFocusable(false);
-        searchLocation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!Places.isInitialized()) {
-                    Places.initialize(getApplicationContext(), "AIzaSyCDV4w01lUaFCXlS0VgmQKh3djJd_a0cdM");
-                }
-                PlacesClient placesClient = Places.createClient(MapsActivity.this);
-                AutocompleteSessionToken token = AutocompleteSessionToken.newInstance();
-                //List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME);
-                String[] fieldList = { "hcm", "hn" };
-                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList).build(MapsActivity.this);
-                startActivityForResult(intent, 100);
-            }
-        });*/
 
         setActionListener();
     }
@@ -121,7 +110,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         if (lastLocation != null) {
                             LatLng location = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
                             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, DEFAULT_MAP_HEIGHT));
-                            mMap.addMarker(new MarkerOptions().position(location).title("Your current location"));
+                            Address address = null;
+                            try {
+                                address = geocoder.getFromLocation(lastLocation.getLatitude(),lastLocation.getLongitude(), 1).get(0);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            if (address != null && address.getAddressLine(0) != null)
+                                mMap.addMarker(new MarkerOptions().position(location).title(address.getAddressLine(0)));
+                            else
+                                mMap.addMarker(new MarkerOptions().position(location).title("Your current location"));
                         } else {
                             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));
                         }
@@ -157,9 +155,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         searchLocation.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                //String keyword = searchLocation.getQuery().toString();
                 if (query != null && !query.equals("")) {
-                    Geocoder geocoder = new Geocoder(MapsActivity.this);
                     List<Address> addressList = null;
                     try {
                         addressList = geocoder.getFromLocationName(query, 10);
@@ -196,7 +192,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        // Xử lí kết quả xin cấp quyền
         locationPermissionGranted = false;
+
+        // requestCode của xin cấp quyền xử dụng vị trí
         if (requestCode == 2) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 locationPermissionGranted = true;
@@ -204,18 +203,4 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
     }
-
-    /*@Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 100 && resultCode == RESULT_OK) {
-            Place place = Autocomplete.getPlaceFromIntent(data);
-            searchLocation.setText(place.getAddress());
-
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), 20));
-            mMap.addMarker(new MarkerOptions().position(place.getLatLng()).title(place.getAddress()));
-        } else if (resultCode == AutocompleteActivity.RESULT_ERROR) {
-            Status status = Autocomplete.getStatusFromIntent(data);
-        }
-    }*/
 }
