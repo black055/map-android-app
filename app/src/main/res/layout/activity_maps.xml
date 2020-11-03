@@ -11,11 +11,12 @@
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginBottom="60dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         map:uiCompass="true"
         map:uiZoomControls="true"
         tools:context=".MapsActivity"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp" />
+        tools:layout_editor_absoluteX="0dp" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/floating_button_map_type"
@@ -82,26 +83,40 @@
         app:srcCompat="@drawable/type_terrain"
         tools:ignore="MissingConstraints,VectorDrawableCompat" />
 
-    <SearchView
+    <EditText
         android:id="@+id/searchLocation"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginLeft="24dp"
         android:layout_marginTop="30dp"
         android:layout_marginRight="24dp"
-        android:queryHint="Tìm kiếm..."
+        android:hint="@string/search"
+        android:maxLines="1"
         android:iconifiedByDefault="false"
         android:background="@drawable/search_bar_background"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:drawableStart="@drawable/ic_baseline_search_24"
+        android:drawableLeft="@drawable/ic_baseline_search_24" />
+
+    <ImageView
+        android:id="@+id/btnCurLocation"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginBottom="150dp"
+        android:background="@drawable/current_location_background"
+        android:src="@drawable/ic_baseline_gps_fixed_24"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/buttom_navigation"
+        android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="60dp"
         android:background="#FFFFFF"
-        app:layout_constraintBottom_toBottomOf="@+id/map"
+        app:layout_constraintTop_toBottomOf="@+id/map"
         app:menu="@menu/bottom_navigation_menu"
         tools:layout_editor_absoluteX="0dp" />
 

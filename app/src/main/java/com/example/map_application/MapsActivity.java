@@ -56,14 +56,18 @@ import java.util.Map;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
+    private final int RQCODE_FOR_PERMISSION = 1;
+    private final int RQCODE_FOR_SEARCH = 2;
     private final int DEFAULT_MAP_HEIGHT = 17;
+
     private boolean locationPermissionGranted;
     private GoogleMap mMap;
     private Geocoder geocoder;
     private Location lastLocation;
     private LatLng defaultLocation;
-    private SearchView searchLocation;
+    private EditText searchLocation;
     public BottomNavigationView navigation;
+    private ImageView btnCurLocation;
 
     // MapType Option
     FloatingActionButton btnSelectType, btnSatellite, btnTerrain, btnDefault;
@@ -77,22 +81,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        Places.initialize(getApplicationContext(), getResources().getString(R.string.google_maps_key));
 
         geocoder = new Geocoder(MapsActivity.this);
         searchLocation = findViewById(R.id.searchLocation);
-
+        searchLocation.setFocusable(false);
         // Kiểm tra đã cấp quyền truy cập vào vị trí chưa
         if (ContextCompat.checkSelfPermission(MapsActivity.this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             locationPermissionGranted = true;
         } else locationPermissionGranted = false;
+
         // Tọa độ mặc định của ứng dụng
         defaultLocation = new LatLng(10.8759, 106.7992);
 
-        setActionListener();
-
         // Thêm navigation bar
-        navigation = (BottomNavigationView) findViewById(R.id.buttom_navigation);
+        navigation = (BottomNavigationView) findViewById(R.id.bottom_navigation);
         navigation.setSelectedItemId(R.id.invisible);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
@@ -101,11 +105,96 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnSatellite = findViewById(R.id.map_satellite);
         btnTerrain = findViewById(R.id.map_terrain);
         btnDefault = findViewById(R.id.map_default);
+        btnCurLocation = findViewById(R.id.btnCurLocation);
 
         selectedMaptype = false;
         btnDefault.hide();
         btnSatellite.hide();
         btnTerrain.hide();
+
+        setActionListener();
+    }
+
+    // TODO: Sử lý các các tính năng tại đây
+    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
+
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.find:
+                    return true;
+                case R.id.place:
+                    return true;
+                case R.id.favorite:
+                    return true;
+                case R.id.history:
+                    return true;
+            }
+            return false;
+        }
+    };
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.setPadding(0, 1600, 0, 140);
+
+        mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));
+    }
+
+    // Chuyển màn hình đến vị trí hiện tại của thiết bị
+    private void setCurrentLocation() {
+        if (locationPermissionGranted) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+            Task<Location> locationResult = LocationServices.getFusedLocationProviderClient(MapsActivity.this).getLastLocation();
+
+            locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
+                @Override
+                public void onComplete(@NonNull Task<Location> task) {
+                    if (task.isSuccessful()) {
+                        lastLocation = task.getResult();
+                        if (lastLocation != null) {
+                            LatLng location = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, DEFAULT_MAP_HEIGHT));
+                            Address address = null;
+                            try {
+                                address = geocoder.getFromLocation(lastLocation.getLatitude(),lastLocation.getLongitude(), 1).get(0);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            if (address != null && address.getAddressLine(0) != null)
+                                mMap.addMarker(new MarkerOptions().position(location).title(address.getAddressLine(0)));
+                            else
+                                mMap.addMarker(new MarkerOptions().position(location).title("Your current location"));
+                        } else {
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));
+                        }
+                    }
+                }
+            });
+        } else getLocationPermission();
+    }
+
+    private void setActionListener() {
+
+        btnCurLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setCurrentLocation();
+            }
+        });
+
+        searchLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME);
+                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList).build(MapsActivity.this);
+                startActivityForResult(intent, RQCODE_FOR_SEARCH);
+            }
+        });
 
         // Thay đổi MapType
         btnSelectType.setOnClickListener(new View.OnClickListener() {
@@ -155,102 +244,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
-    // TODO: Sử lý các các tính năng tại đây
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
-
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.find:
-                    return true;
-                case R.id.place:
-                    return true;
-                case R.id.favorite:
-                    return true;
-                case R.id.history:
-                    return true;
-            }
-            return false;
-        }
-    };
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        mMap.setPadding(0, 1600, 0, 140);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        mMap.setMyLocationEnabled(true);
-
-        mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));
-    }
-
-    // Chuyển màn hình đến vị trí hiện tại của thiết bị
-    private void setCurrentLocation() {
-        if (locationPermissionGranted) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-            Task<Location> locationResult = LocationServices.getFusedLocationProviderClient(MapsActivity.this).getLastLocation();
-
-            locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
-                @Override
-                public void onComplete(@NonNull Task<Location> task) {
-                    if (task.isSuccessful()) {
-                        lastLocation = task.getResult();
-                        if (lastLocation != null) {
-                            LatLng location = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, DEFAULT_MAP_HEIGHT));
-                            Address address = null;
-                            try {
-                                address = geocoder.getFromLocation(lastLocation.getLatitude(),lastLocation.getLongitude(), 1).get(0);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            if (address != null && address.getAddressLine(0) != null)
-                                mMap.addMarker(new MarkerOptions().position(location).title(address.getAddressLine(0)));
-                            else
-                                mMap.addMarker(new MarkerOptions().position(location).title("Your current location"));
-                        } else {
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));
-                        }
-                    }
-                }
-            });
-        } else getLocationPermission();
-    }
-
-    private void setActionListener() {
-        searchLocation.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                if (query != null && !query.equals("")) {
-                    List<Address> addressList = null;
-                    try {
-                        addressList = geocoder.getFromLocationName(query, 10);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    if (addressList.size() > 0) {
-                        LatLng location = new LatLng(addressList.get(0).getLatitude(), addressList.get(0).getLongitude());
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, DEFAULT_MAP_HEIGHT));
-                        if (addressList.get(0).getAddressLine(0) != null) {
-                            mMap.addMarker(new MarkerOptions().position(location).title(addressList.get(0).getAddressLine(0)));
-                        } else mMap.addMarker(new MarkerOptions().position(location));
-                    }
-                }
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                return false;
-            }
-        });
-    }
-
     // Kiểm tra và xin cấp quyền sử dụng vị trí
     private void getLocationPermission() {
         if (ContextCompat.checkSelfPermission(MapsActivity.this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
@@ -258,7 +251,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             locationPermissionGranted = true;
             setCurrentLocation();
         }
-        else ActivityCompat.requestPermissions(MapsActivity.this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, 2);
+        else ActivityCompat.requestPermissions(MapsActivity.this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, RQCODE_FOR_PERMISSION);
     }
 
     @Override
@@ -267,11 +260,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         locationPermissionGranted = false;
 
         // requestCode của xin cấp quyền xử dụng vị trí
-        if (requestCode == 2) {
+        if (requestCode == RQCODE_FOR_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 locationPermissionGranted = true;
                 setCurrentLocation();
             }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RQCODE_FOR_SEARCH && resultCode == RESULT_OK) {
+            Place place = Autocomplete.getPlaceFromIntent(data);
+            searchLocation.setText(place.getAddress());
+
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), DEFAULT_MAP_HEIGHT));
+            mMap.addMarker(new MarkerOptions().position(place.getLatLng()).title(place.getAddress()));
         }
     }
 }
