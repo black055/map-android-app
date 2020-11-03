@@ -18,7 +18,7 @@
         android:id="@+id/btnZoomIn"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:layout_marginBottom="116dp"
+        android:layout_marginBottom="136dp"
         android:text="+"
         android:textSize="30sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -30,11 +30,11 @@
         android:id="@+id/btnZoomOut"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:layout_marginBottom="56dp"
+        android:layout_marginBottom="76dp"
         android:text="-"
         android:textSize="30sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.955"
+        app:layout_constraintHorizontal_bias="0.954"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
 
@@ -42,11 +42,11 @@
         android:id="@+id/btnCurPosition"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:layout_marginBottom="56dp"
+        android:layout_marginBottom="88dp"
         android:background="@drawable/current_position_background"
         android:src="@drawable/ic_baseline_gps_fixed_24"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.049"
+        app:layout_constraintHorizontal_bias="0.045"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent" />
 
@@ -63,5 +63,14 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/buttom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="@+id/map"
+        app:menu="@menu/bottom_navigation_menu"
+        tools:layout_editor_absoluteX="0dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

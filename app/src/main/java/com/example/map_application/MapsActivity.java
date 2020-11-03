@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
+import android.app.ActionBar;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -17,6 +18,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -43,6 +45,7 @@ import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.AutocompleteActivity;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -61,6 +64,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Location lastLocation;
     private LatLng defaultLocation;
     private SearchView searchLocation;
+    private ActionBar toolBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,7 +91,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         defaultLocation = new LatLng(10.8759, 106.7992);
 
         setActionListener();
+
+        // Thêm navigation bar
+        toolBar = getActionBar();
+        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.buttom_navigation);
+        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
     }
+
+    // TODO: Sử lý các các tính năng tại đây
+    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
+
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            switch (item.getItemId())
+            {
+                case R.id.find:
+                    return true;
+                case R.id.place:
+                    return true;
+                case R.id.favorite:
+                    return true;
+                case R.id.history:
+                    return true;
+            }
+            return false;
+        }
+    };
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -100,6 +129,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     // Chuyển màn hình đến vị trí hiện tại của thiết bị
     private void setCurrentLocation() {
         if (locationPermissionGranted) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
             Task<Location> locationResult = LocationServices.getFusedLocationProviderClient(MapsActivity.this).getLastLocation();
 
             locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
