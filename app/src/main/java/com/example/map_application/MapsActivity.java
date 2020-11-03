@@ -46,6 +46,7 @@ import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.AutocompleteActivity;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -59,12 +60,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private boolean locationPermissionGranted;
     private GoogleMap mMap;
     private Geocoder geocoder;
-    private Button btnZoomIn, btnZoomOut;
-    private ImageView btnCurPosition;
     private Location lastLocation;
     private LatLng defaultLocation;
     private SearchView searchLocation;
-    private ActionBar toolBar;
+    public BottomNavigationView navigation;
+
+    // MapType Option
+    FloatingActionButton btnSelectType, btnSatellite, btnTerrain, btnDefault;
+    boolean selectedMaptype;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,10 +79,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
 
         geocoder = new Geocoder(MapsActivity.this);
-
-        btnZoomIn = findViewById(R.id.btnZoomIn);
-        btnZoomOut = findViewById(R.id.btnZoomOut);
-        btnCurPosition = findViewById(R.id.btnCurPosition);
         searchLocation = findViewById(R.id.searchLocation);
 
         // Kiểm tra đã cấp quyền truy cập vào vị trí chưa
@@ -93,9 +92,67 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setActionListener();
 
         // Thêm navigation bar
-        toolBar = getActionBar();
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.buttom_navigation);
+        navigation = (BottomNavigationView) findViewById(R.id.buttom_navigation);
+        navigation.setSelectedItemId(R.id.invisible);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+
+        // Thêm Chọn Mape Type
+        btnSelectType = findViewById(R.id.floating_button_map_type);
+        btnSatellite = findViewById(R.id.map_satellite);
+        btnTerrain = findViewById(R.id.map_terrain);
+        btnDefault = findViewById(R.id.map_default);
+
+        selectedMaptype = false;
+        btnDefault.hide();
+        btnSatellite.hide();
+        btnTerrain.hide();
+
+        // Thay đổi MapType
+        btnSelectType.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (selectedMaptype) {
+                    btnDefault.hide();
+                    btnSatellite.hide();
+                    btnTerrain.hide();
+                    selectedMaptype = false;
+                }
+
+                else if (!selectedMaptype) {
+                    btnTerrain.show();
+                    btnSatellite.show();
+                    btnDefault.show();;
+                    selectedMaptype = true;
+                }
+            }
+        });
+
+        btnDefault.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mMap.getMapType() != GoogleMap.MAP_TYPE_NORMAL) {
+                    mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+                }
+            }
+        });
+
+        btnSatellite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mMap.getMapType() != GoogleMap.MAP_TYPE_SATELLITE) {
+                    mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+                }
+            }
+        });
+
+        btnTerrain.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mMap.getMapType() != GoogleMap.MAP_TYPE_TERRAIN) {
+                    mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
+                }
+            }
+        });
     }
 
     // TODO: Sử lý các các tính năng tại đây
@@ -103,8 +160,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            switch (item.getItemId())
-            {
+            switch (item.getItemId()) {
                 case R.id.find:
                     return true;
                 case R.id.place:
@@ -121,6 +177,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setPadding(0, 1600, 0, 140);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
 
         mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));
@@ -162,28 +223,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void setActionListener() {
-        btnZoomIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mMap.animateCamera(CameraUpdateFactory.zoomIn());
-            }
-        });
-
-        btnZoomOut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mMap.animateCamera(CameraUpdateFactory.zoomOut());
-            }
-        });
-
-        btnCurPosition.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setCurrentLocation();
-            }
-        });
-
-
         searchLocation.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {

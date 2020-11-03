@@ -23,4 +23,10 @@
         android:enabled="true"
         android:icon="@drawable/ic_baseline_history_24"
         android:title="History" />
+
+    <item
+        android:id="@+id/invisible"
+        android:title="None"
+        android:enabled="true"
+        android:visible="false"/>
 </menu>

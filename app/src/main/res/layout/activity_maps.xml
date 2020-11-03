@@ -3,52 +3,84 @@
     android:layout_height="match_parent"
     android:layout_width="match_parent"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:map="http://schemas.android.com/apk/res-auto">
 
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        map:uiCompass="true"
+        map:uiZoomControls="true"
         tools:context=".MapsActivity"
         tools:layout_editor_absoluteX="0dp"
         tools:layout_editor_absoluteY="0dp" />
 
-    <Button
-        android:id="@+id/btnZoomIn"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginBottom="136dp"
-        android:text="+"
-        android:textSize="30sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.954"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent" />
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/floating_button_map_type"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|right"
+        android:layout_margin="16dp"
+        android:layout_marginTop="48dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        app:backgroundTint="#FFFFFF"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/searchLocation"
+        app:srcCompat="@drawable/ic_baseline_map_24"
+        tools:ignore="MissingConstraints,VectorDrawableCompat" />
 
-    <Button
-        android:id="@+id/btnZoomOut"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginBottom="76dp"
-        android:text="-"
-        android:textSize="30sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.954"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent" />
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/map_default"
+        android:layout_width="54dp"
+        android:layout_height="57dp"
+        android:layout_gravity="top|right"
+        android:layout_margin="16dp"
+        android:layout_marginTop="8dp"
+        app:backgroundTint="#FFFFFF"
+        app:layout_constraintEnd_toStartOf="@+id/map_satellite"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/map_terrain"
+        app:srcCompat="@drawable/type_default"
+        tools:ignore="MissingConstraints,VectorDrawableCompat" />
 
-    <ImageView
-        android:id="@+id/btnCurPosition"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginBottom="88dp"
-        android:background="@drawable/current_position_background"
-        android:src="@drawable/ic_baseline_gps_fixed_24"
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/map_satellite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|right"
+        android:layout_margin="16dp"
+        android:layout_marginTop="68dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginRight="24dp"
+        app:backgroundTint="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.045"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/floating_button_map_type"
+        app:layout_constraintVertical_bias="0.052"
+        app:srcCompat="@drawable/type_satellite"
+        tools:ignore="MissingConstraints,VectorDrawableCompat" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/map_terrain"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|right"
+        android:layout_margin="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="36dp"
+        android:layout_marginRight="36dp"
+        app:backgroundTint="#FFFFFF"
+        app:layout_constraintEnd_toStartOf="@+id/floating_button_map_type"
+        app:layout_constraintHorizontal_bias="0.919"
+        app:layout_constraintRight_toLeftOf="@id/floating_button_map_type"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/searchLocation"
+        app:srcCompat="@drawable/type_terrain"
+        tools:ignore="MissingConstraints,VectorDrawableCompat" />
 
     <SearchView
         android:id="@+id/searchLocation"
