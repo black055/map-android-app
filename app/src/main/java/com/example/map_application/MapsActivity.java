@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
+import android.app.SearchManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -21,6 +22,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.SearchView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Status;
@@ -49,12 +51,13 @@ import java.util.Map;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
+    private final int DEFAULT_MAP_HEIGHT = 17;
     private boolean locationPermissionGranted;
     private GoogleMap mMap;
     private Button btnZoomIn, btnZoomOut, btnCurPosition;
     private Location lastLocation;
     private LatLng defaultLocation;
-    private EditText searchLocation;
+    private SearchView searchLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,7 +81,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Tọa độ mặc định của ứng dụng
         defaultLocation = new LatLng(10.8759, 106.7992);
 
-        searchLocation.setFocusable(false);
+        /*searchLocation.setFocusable(false);
         searchLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -87,11 +90,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 PlacesClient placesClient = Places.createClient(MapsActivity.this);
                 AutocompleteSessionToken token = AutocompleteSessionToken.newInstance();
-                List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME);
+                //List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME);
+                String[] fieldList = { "hcm", "hn" };
                 Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList).build(MapsActivity.this);
                 startActivityForResult(intent, 100);
             }
-        });
+        });*/
 
         setActionListener();
     }
@@ -101,7 +105,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 20));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));
     }
 
     // Chuyển màn hình đến vị trí hiện tại của thiết bị
@@ -116,10 +120,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         lastLocation = task.getResult();
                         if (lastLocation != null) {
                             LatLng location = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 20));
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, DEFAULT_MAP_HEIGHT));
                             mMap.addMarker(new MarkerOptions().position(location).title("Your current location"));
                         } else {
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 20));
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));
                         }
                     }
                 }
@@ -150,7 +154,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
 
-        /*searchLocation.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+        searchLocation.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 //String keyword = searchLocation.getQuery().toString();
@@ -158,14 +162,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Geocoder geocoder = new Geocoder(MapsActivity.this);
                     List<Address> addressList = null;
                     try {
-                        addressList = geocoder.getFromLocationName(query, 1);
+                        addressList = geocoder.getFromLocationName(query, 10);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                     if (addressList.size() > 0) {
                         LatLng location = new LatLng(addressList.get(0).getLatitude(), addressList.get(0).getLongitude());
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 20));
-                        mMap.addMarker(new MarkerOptions().position(location));
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, DEFAULT_MAP_HEIGHT));
+                        if (addressList.get(0).getAddressLine(0) != null) {
+                            mMap.addMarker(new MarkerOptions().position(location).title(addressList.get(0).getAddressLine(0)));
+                        } else mMap.addMarker(new MarkerOptions().position(location));
                     }
                 }
                 return false;
@@ -175,7 +181,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public boolean onQueryTextChange(String newText) {
                 return false;
             }
-        });*/
+        });
     }
 
     // Kiểm tra và xin cấp quyền sử dụng vị trí
@@ -199,7 +205,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    @Override
+    /*@Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 100 && resultCode == RESULT_OK) {
@@ -211,5 +217,5 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } else if (resultCode == AutocompleteActivity.RESULT_ERROR) {
             Status status = Autocomplete.getStatusFromIntent(data);
         }
-    }
+    }*/
 }
