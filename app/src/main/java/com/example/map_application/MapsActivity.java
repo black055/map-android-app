@@ -2,33 +2,24 @@ package com.example.map_application;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
-import android.app.ActionBar;
-import android.app.SearchManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.SearchView;
-import android.widget.Toast;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -39,20 +30,15 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
-import com.google.android.libraries.places.api.model.AutocompleteSessionToken;
 import com.google.android.libraries.places.api.model.Place;
-import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.Autocomplete;
-import com.google.android.libraries.places.widget.AutocompleteActivity;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -66,12 +52,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Location lastLocation;
     private LatLng defaultLocation;
     private EditText searchLocation;
-    public BottomNavigationView navigation;
     private ImageView btnCurLocation;
 
     // MapType Option
     FloatingActionButton btnSelectType, btnSatellite, btnTerrain, btnDefault;
     boolean selectedMaptype;
+
+    // Navigation Bar
+    public BottomNavigationView navigation;
+
+    // Location information
+    LinearLayout informationLocation;
+    TextView nameLocation, phoneLocation, ratingLocation, addressLocation, priceLevel;
+
+    // List places
+    List<Place> favorite;
+    List<Place> history;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,10 +103,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnDefault = findViewById(R.id.map_default);
         btnCurLocation = findViewById(R.id.btnCurLocation);
 
+
+        informationLocation = findViewById(R.id.infoLayout);
+        nameLocation = findViewById(R.id.namePos);
+        phoneLocation = findViewById(R.id.phonePos);
+        ratingLocation = findViewById(R.id.rating);
+        addressLocation = findViewById(R.id.address);
+        priceLevel = findViewById(R.id.price_level);
+
+        // ẩn ban đầu cho một số view
         selectedMaptype = false;
         btnDefault.hide();
         btnSatellite.hide();
         btnTerrain.hide();
+        informationLocation.setVisibility(LinearLayout.GONE);
 
         setActionListener();
     }
@@ -122,23 +128,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.find:
+                    informationLocation.setVisibility(LinearLayout.GONE);
                     return true;
                 case R.id.place:
+                    informationLocation.setVisibility(LinearLayout.GONE);
                     return true;
                 case R.id.favorite:
+                    informationLocation.setVisibility(LinearLayout.GONE);
                     return true;
                 case R.id.history:
+                    informationLocation.setVisibility(LinearLayout.GONE);
                     return true;
             }
             return false;
         }
     };
 
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        mMap.setPadding(0, 1600, 0, 140);
-
+        //mMap.setPadding(0, 1600, 0, 140);
         mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));
     }
@@ -183,6 +193,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnCurLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (informationLocation.getVisibility() == LinearLayout.VISIBLE) {
+                    informationLocation.setVisibility(LinearLayout.GONE);
+                }
                 setCurrentLocation();
             }
         });
@@ -190,7 +203,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         searchLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME);
+                List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME
+                        , Place.Field.RATING, Place.Field.PHONE_NUMBER, Place.Field.PRICE_LEVEL);
                 Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList).build(MapsActivity.this);
                 startActivityForResult(intent, RQCODE_FOR_SEARCH);
             }
@@ -274,6 +288,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (requestCode == RQCODE_FOR_SEARCH && resultCode == RESULT_OK) {
             Place place = Autocomplete.getPlaceFromIntent(data);
             searchLocation.setText(place.getAddress());
+            nameLocation.setText(place.getName());
+            addressLocation.setText(place.getAddress());
+            // check phone number
+            if (place.getPhoneNumber() != null) {
+                phoneLocation.setText("Phone number: " + place.getPhoneNumber());
+            }
+            else
+                phoneLocation.setVisibility(View.GONE);
+
+            // check rating
+            if (place.getRating() != null) {
+                ratingLocation.setText("Rating : " + place.getRating());
+            }
+            else
+                ratingLocation.setVisibility(View.GONE);
+
+
+            // check price level
+            if (place.getPriceLevel() != null) {
+                priceLevel.setText("Price level: " + place.getPriceLevel());
+            }
+            else
+                priceLevel.setVisibility(View.GONE);
+
+            informationLocation.setVisibility(LinearLayout.VISIBLE);
 
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), DEFAULT_MAP_HEIGHT));
             mMap.addMarker(new MarkerOptions().position(place.getLatLng()).title(place.getAddress()));

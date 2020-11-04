@@ -16,7 +16,7 @@
         map:uiCompass="true"
         map:uiZoomControls="true"
         tools:context=".MapsActivity"
-        tools:layout_editor_absoluteX="0dp" />
+        tools:layout_editor_absoluteX="194dp" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/floating_button_map_type"
@@ -24,9 +24,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="top|right"
         android:layout_margin="16dp"
-        android:layout_marginTop="48dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginRight="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
         app:backgroundTint="#FFFFFF"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/searchLocation"
@@ -55,13 +55,13 @@
         android:layout_gravity="top|right"
         android:layout_margin="16dp"
         android:layout_marginTop="68dp"
-        android:layout_marginEnd="24dp"
-        android:layout_marginRight="24dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
         app:backgroundTint="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/floating_button_map_type"
-        app:layout_constraintVertical_bias="0.052"
+        app:layout_constraintVertical_bias="0.03"
         app:srcCompat="@drawable/type_satellite"
         tools:ignore="MissingConstraints,VectorDrawableCompat" />
 
@@ -76,7 +76,7 @@
         android:layout_marginRight="36dp"
         app:backgroundTint="#FFFFFF"
         app:layout_constraintEnd_toStartOf="@+id/floating_button_map_type"
-        app:layout_constraintHorizontal_bias="0.919"
+        app:layout_constraintHorizontal_bias="0.971"
         app:layout_constraintRight_toLeftOf="@id/floating_button_map_type"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/searchLocation"
@@ -88,28 +88,93 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginLeft="24dp"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="20dp"
         android:layout_marginRight="24dp"
-        android:hint="@string/search"
-        android:maxLines="1"
-        android:iconifiedByDefault="false"
         android:background="@drawable/search_bar_background"
+        android:drawableStart="@drawable/ic_baseline_search_24"
+        android:drawableLeft="@drawable/ic_baseline_search_24"
+        android:hint="@string/search"
+        android:iconifiedByDefault="false"
+        android:maxLines="1"
+        android:paddingLeft="15dp"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:drawableStart="@drawable/ic_baseline_search_24"
-        android:drawableLeft="@drawable/ic_baseline_search_24" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
         android:id="@+id/btnCurLocation"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginLeft="5dp"
-        android:layout_marginBottom="150dp"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_marginBottom="36dp"
         android:background="@drawable/current_location_background"
         android:src="@drawable/ic_baseline_gps_fixed_24"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent" />
+        app:layout_constraintBottom_toTopOf="@+id/infoLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.018"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/infoLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/info_background"
+        android:orientation="vertical"
+        android:padding="10dp"
+        app:layout_constraintBottom_toBottomOf="@+id/map"
+        tools:layout_editor_absoluteX="0dp"
+        android:animateLayoutChanges="true">
+
+        <TextView
+            android:id="@+id/namePos"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:text="Name of Location"
+            android:textSize="25sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/address"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Address"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/phonePos"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Phone"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/price_level"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Price Level: "
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/rating"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rating"
+            android:textSize="18sp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/add_fav_background"
+            android:paddingLeft="15dp"
+            android:paddingRight="15dp"
+            android:text="Add favorite"
+            android:textColor="#FFFFFF"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/searchLocation" />
+    </LinearLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
@@ -118,6 +183,8 @@
         android:background="#FFFFFF"
         app:layout_constraintTop_toBottomOf="@+id/map"
         app:menu="@menu/bottom_navigation_menu"
-        tools:layout_editor_absoluteX="0dp" />
+        tools:layout_editor_absoluteX="0dp" >
+
+    </com.google.android.material.bottomnavigation.BottomNavigationView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
