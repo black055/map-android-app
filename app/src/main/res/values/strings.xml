@@ -4,4 +4,7 @@
     <string name="enter_origin_address">Enter origin address</string>
     <string name="enter_destination_address">Enter destination address</string>
     <string name="google_maps_key">AIzaSyBBvvBoeUtjWBb9jnXyxYkJRfuF_PdCCYM</string>
+    <string name="search">Tìm kiếm...</string>
+    <string name="init_second">0s</string>
+    <string name="init_kilometer">0 km</string>
 </resources>
