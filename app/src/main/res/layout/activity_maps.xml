@@ -12,7 +12,7 @@
         android:layout_height="match_parent"
         tools:context=".MapsActivity"
         tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp" />
+        tools:layout_editor_absoluteY="-16dp" />
 
     <Button
         android:id="@+id/btnZoomIn"
@@ -65,12 +65,92 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/buttom_navigation"
+        android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="@+id/map"
         app:menu="@menu/bottom_navigation_menu"
         tools:layout_editor_absoluteX="0dp" />
+
+    <LinearLayout
+        android:id="@+id/llFindPath"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/quantum_white_100"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/map"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/btnFindPathBack"
+            android:layout_width="42dp"
+            android:layout_height="36dp"
+            android:layout_marginLeft="12dp"
+            android:background="@drawable/ic_baseline_arrow_back_ios_24"
+            android:paddingStart="10dp"
+            android:paddingLeft="10dp"
+            android:paddingEnd="30dp"
+            android:paddingRight="30dp"
+            android:textColor="@android:color/black" />
+
+        <EditText
+            android:id="@+id/edtOrigin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="12dp"
+            android:ems="10"
+            android:hint="@string/enter_origin_address"
+            android:inputType="textPersonName" />
+
+        <EditText
+            android:id="@+id/edtDestination"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="12dp"
+            android:ems="10"
+            android:hint="@string/enter_destination_address"
+            android:inputType="textPersonName" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnFindPath"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="12dp"
+                android:background="@drawable/ic_baseline_search_24" />
+
+            <TextView
+                android:id="@+id/tvDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginLeft="40dp"
+                android:layout_weight="1"
+                android:drawableLeft="@drawable/ic_baseline_timer_24"
+                android:text="0s"
+                android:gravity="center" />
+
+            <TextView
+                android:id="@+id/tvDistance"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginLeft="12dp"
+                android:layout_weight="1"
+                android:drawableLeft="@drawable/ic_car"
+                android:text="0 km"
+                android:gravity="center" />
+        </LinearLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
