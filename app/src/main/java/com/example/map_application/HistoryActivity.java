@@ -18,24 +18,24 @@ import modules.PlaceObject;
 
 import static android.R.layout.simple_list_item_2;
 
-public class FavoriteActivity extends ListActivity {
-    ArrayList<PlaceObject> listFav;
-    List<Map<String, String>> list_favorite;
+public class HistoryActivity extends ListActivity {
+    ArrayList<PlaceObject> listHis;
+    List<Map<String, String>> list_history;
     DBManager dbManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_favorite);
-        list_favorite = new ArrayList<>();
+        setContentView(R.layout.activity_history);
+        list_history = new ArrayList<>();
         dbManager = new DBManager(this);
-        listFav = dbManager.FAVORITE_getAll();
-        for (PlaceObject place : listFav) {
+        listHis = dbManager.HISTORY_getAll();
+        for (PlaceObject place : listHis) {
             Map<String, String> item = new HashMap<>();
             item.put("name", place.getName());
             item.put("address", place.getAddress());
-            list_favorite.add(item);
+            list_history.add(item);
         }
-        setListAdapter(new SimpleAdapter(this, list_favorite, simple_list_item_2,
+        setListAdapter(new SimpleAdapter(this, list_history, simple_list_item_2,
                 new String[] {"name", "address"}, new int[] {android.R.id.text1, android.R.id.text2}));
     }
 

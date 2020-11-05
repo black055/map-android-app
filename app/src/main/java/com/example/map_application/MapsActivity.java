@@ -60,6 +60,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private final int RQCODE_FOR_PERMISSION = 1;
     private final int RQCODE_FOR_SEARCH = 2;
+    private final int RQCODE_FROM_FAVORITE = 3;
+    private final int RQCODE_FROM_HISTORY = 4;
     private final int DEFAULT_MAP_HEIGHT = 17;
 
     private boolean locationPermissionGranted;
@@ -201,11 +203,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     informationLocation.setVisibility(LinearLayout.GONE);
                     return true;
                 case R.id.favorite:
-                    Intent intent = new Intent(MapsActivity.this, FavoriteActivity.class);
-                    startActivity(intent);
+                    Intent intent_favorite = new Intent(MapsActivity.this, FavoriteActivity.class);
+                    startActivityForResult(intent_favorite, RQCODE_FROM_FAVORITE);
                     informationLocation.setVisibility(LinearLayout.GONE);
                     return true;
                 case R.id.history:
+                    Intent intent_history = new Intent(MapsActivity.this, HistoryActivity.class);
+                    startActivityForResult(intent_history, RQCODE_FROM_HISTORY);
                     informationLocation.setVisibility(LinearLayout.GONE);
                     return true;
             }
@@ -485,15 +489,36 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 priceLevel.setVisibility(View.GONE);
 
             informationLocation.setVisibility(LinearLayout.VISIBLE);
+
+            // listener cho button add favorite
             btnAddFav.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    dbManager.addPlaceFavorite(new PlaceObject(place.getName(), place.getAddress(), place.getLatLng()));
+                    dbManager.FAVORITE_addPlace(new PlaceObject(place.getName(), place.getAddress(), place.getLatLng()));
                 }
             });
 
+            // thêm vào lịch sử tìm kiếm
+            dbManager.HISTORY_addPlace(new PlaceObject(place.getName(), place.getAddress(), place.getLatLng()));
+
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), DEFAULT_MAP_HEIGHT));
             mMap.addMarker(new MarkerOptions().position(place.getLatLng()).title(place.getAddress()));
+        }
+
+        if (resultCode == RESULT_OK && requestCode == RQCODE_FROM_FAVORITE && data != null) {
+            int pos = data.getIntExtra("position", 0) + 1;
+            PlaceObject place = dbManager.FAVORITE_getPlace(pos);
+            mMap.clear();
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatlong(), DEFAULT_MAP_HEIGHT));
+            mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress()));
+        }
+
+        if (resultCode == RESULT_OK && requestCode == RQCODE_FROM_HISTORY && data != null) {
+            int pos = data.getIntExtra("position", 0) + 1;
+            PlaceObject place = dbManager.HISTORY_getPlace(pos);
+            mMap.clear();
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatlong(), DEFAULT_MAP_HEIGHT));
+            mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress()));
         }
     }
 }
