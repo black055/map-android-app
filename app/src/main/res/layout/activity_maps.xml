@@ -16,7 +16,7 @@
         map:uiCompass="true"
         map:uiZoomControls="true"
         tools:context=".MapsActivity"
-        tools:layout_editor_absoluteX="194dp" />
+        tools:layout_editor_absoluteX="24dp" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/floating_button_map_type"
@@ -27,6 +27,7 @@
         android:layout_marginTop="16dp"
         android:layout_marginEnd="32dp"
         android:layout_marginRight="32dp"
+        android:visibility="visible"
         app:backgroundTint="#FFFFFF"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/searchLocation"
@@ -102,6 +103,22 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnShare"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|right"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="108dp"
+        app:backgroundTint="#FFFFFF"
+        app:layout_constraintBottom_toTopOf="@+id/infoLayout"
+        app:layout_constraintEnd_toEndOf="@+id/map"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/ic_baseline_share_24"
+        tools:ignore="MissingConstraints,VectorDrawableCompat" />
+
     <ImageView
         android:id="@+id/btnCurLocation"
         android:layout_width="35dp"
@@ -119,12 +136,13 @@
         android:id="@+id/infoLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:animateLayoutChanges="true"
         android:background="@drawable/info_background"
         android:orientation="vertical"
         android:padding="10dp"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="@+id/map"
-        tools:layout_editor_absoluteX="0dp"
-        android:animateLayoutChanges="true">
+        tools:layout_editor_absoluteX="0dp">
 
         <TextView
             android:id="@+id/namePos"

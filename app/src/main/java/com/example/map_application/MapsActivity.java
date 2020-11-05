@@ -15,7 +15,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.view.View;import android.view.inputmethod.InputMethodManager;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -45,7 +45,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -81,6 +80,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LatLng defaultLocation;
     private EditText searchLocation;
     private ImageView btnCurLocation;
+    private FloatingActionButton btnShare;
 
     // MapType Option
     FloatingActionButton btnSelectType, btnSatellite, btnTerrain, btnDefault;
@@ -126,6 +126,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnFindPathBack = findViewById(R.id.btnFindPathBack);
         btnFindPath = findViewById(R.id.btnFindPath);
 
+
         //send request
         btnFindPath.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -145,7 +146,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnTerrain = findViewById(R.id.map_terrain);
         btnDefault = findViewById(R.id.map_default);
         btnCurLocation = findViewById(R.id.btnCurLocation);
-
+        btnShare = findViewById(R.id.btnShare);
 
         informationLocation = findViewById(R.id.infoLayout);
         nameLocation = findViewById(R.id.namePos);
@@ -353,6 +354,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 startActivityForResult(intent, RQCODE_FOR_SEARCH);
             }
         });*/
+
+        btnShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getCurrentLocation();
+                if (lastLocation != null) {
+                    Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                    sharingIntent.setType("text/plain");
+                    sharingIntent.putExtra(Intent.EXTRA_TEXT, "https://maps.google.com?q="
+                    + lastLocation.getLatitude() + "," + lastLocation.getLongitude());
+                    startActivity(Intent.createChooser(sharingIntent, "Share via"));
+                }
+            }
+        });
     }
 
     // Kiểm tra và xin cấp quyền sử dụng vị trí
