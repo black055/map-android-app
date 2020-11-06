@@ -62,7 +62,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private boolean locationPermissionGranted;
     private GoogleMap mMap;
-    private Geocoder geocoder;private Button btnZoomIn, btnZoomOut, btnFindPathBack, btnFindPath;
+    private Geocoder geocoder;
+
 
     //find path
     private EditText edtOrigin, edtDestination;
@@ -72,6 +73,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private List<Marker> destinationMarkers = new ArrayList<>();
     private List<Polyline> polylinePaths = new ArrayList<>();
     private ProgressDialog progressDialog;
+    private Button btnFindPathBack, btnFindPath;
     //---------
     private Location lastLocation;
     private LatLng defaultLocation;
