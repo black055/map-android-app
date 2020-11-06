@@ -14,6 +14,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -23,6 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -39,6 +41,8 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.Autocomplete;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -61,6 +65,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private final int RQCODE_FOR_SEARCH = 2;
     private final int RQCODE_FROM_FAVORITE = 3;
     private final int RQCODE_FROM_HISTORY = 4;
+    private final int RQCODE_FOR_FINDORI = 5;
+    private final int RQCODE_FOR_FINDDES = 6;
     private final int DEFAULT_MAP_HEIGHT = 17;
 
     private boolean locationPermissionGranted;
@@ -126,15 +132,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnFindPathBack = findViewById(R.id.btnFindPathBack);
         btnFindPath = findViewById(R.id.btnFindPath);
 
-
-        //send request
-        btnFindPath.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendRequest();
-            }
-        });
-
         // Thêm navigation bar
         navigation = (BottomNavigationView) findViewById(R.id.bottom_navigation);
         navigation.setSelectedItemId(R.id.invisible);
@@ -175,14 +172,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.find:
-                    //Ẩn thanh search location
-                    searchLocation.setVisibility(View.GONE);
+                    //llFindPath.animate().translationY(llFindPath.getHeight());
                     //Hiện thanh tìm kiếm 2 địa điểm
                     llFindPath.setVisibility(View.VISIBLE);
-                    //Xử lí nút back quay về giao diện chính
+                    //Ẩn thanh search location
+                    searchLocation.setVisibility(View.GONE);
+                    //Xử lí nút Back quay về giao diện chính
                     btnFindPathBack.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
+                            //llFindPath.animate().translationY(0);
                             llFindPath.setVisibility(View.GONE);
                             searchLocation.setVisibility(View.VISIBLE);
                             edtOrigin.setText("");
@@ -337,23 +336,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-        /*edtOrigin.setOnClickListener(new View.OnClickListener() {
+        edtOrigin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME);
+                List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME
+                        , Place.Field.RATING, Place.Field.PHONE_NUMBER, Place.Field.PRICE_LEVEL);
                 Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList).build(MapsActivity.this);
-                startActivityForResult(intent, RQCODE_FOR_SEARCH);
+                startActivityForResult(intent, RQCODE_FOR_FINDORI);
             }
         });
 
         edtDestination.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME);
+                List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME
+                        , Place.Field.RATING, Place.Field.PHONE_NUMBER, Place.Field.PRICE_LEVEL);
                 Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList).build(MapsActivity.this);
-                startActivityForResult(intent, RQCODE_FOR_SEARCH);
+                startActivityForResult(intent, RQCODE_FOR_FINDDES);
             }
-        });*/
+        });
 
         btnShare.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -366,6 +367,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     + lastLocation.getLatitude() + "," + lastLocation.getLongitude());
                     startActivity(Intent.createChooser(sharingIntent, "Share via"));
                 }
+            }
+        });
+
+        //send request
+        btnFindPath.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendRequest();
             }
         });
     }
@@ -428,7 +437,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (routes.size() == 0) return;
 
         for (Route route : routes) {
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(route.startLocation, 16));
+            //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(route.startLocation, 16));
+            mMap.clear();
+            //chuyển camera tới vị trí bắt đầu
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(route.startLocation, DEFAULT_MAP_HEIGHT));
+
             tvDuration.setText(route.duration.text);
             tvDistance.setText(route.distance.text);
 
@@ -534,6 +547,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.clear();
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatlong(), DEFAULT_MAP_HEIGHT));
             mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress()));
+        }
+
+        if (requestCode == RQCODE_FOR_FINDORI && resultCode == RESULT_OK) {
+            Place place = Autocomplete.getPlaceFromIntent(data);
+            edtOrigin.setText(place.getAddress());
+        }
+
+        if (requestCode == RQCODE_FOR_FINDDES && resultCode == RESULT_OK) {
+            Place place = Autocomplete.getPlaceFromIntent(data);
+            edtDestination.setText(place.getAddress());
         }
     }
 }
