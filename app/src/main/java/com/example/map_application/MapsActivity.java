@@ -7,7 +7,6 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -20,6 +19,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -75,8 +75,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private List<Marker> originMarkers = new ArrayList<>();
     private List<Marker> destinationMarkers = new ArrayList<>();
     private List<Polyline> polylinePaths = new ArrayList<>();
-    private ProgressDialog progressDialog;
     private Button btnFindPathBack, btnFindPath;
+    private PopupMenu popupMenu;
     //---------
     private Location lastLocation;
     private LatLng defaultLocation;
@@ -128,7 +128,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnFindPathBack = findViewById(R.id.btnFindPathBack);
         btnFindPath = findViewById(R.id.btnFindPath);
 
-
         //send request
         btnFindPath.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -141,7 +140,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         navigation = (BottomNavigationView) findViewById(R.id.bottom_navigation);
         navigation.setSelectedItemId(R.id.invisible);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
-
+        popupMenu = new PopupMenu(MapsActivity.this, navigation);
+        popupMenu.getMenuInflater().inflate(R.menu.places_picker_menu, popupMenu.getMenu());
         // Thêm Chọn Mape Type
         btnSelectType = findViewById(R.id.floating_button_map_type);
         btnSatellite = findViewById(R.id.map_satellite);
@@ -196,13 +196,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     informationLocation.setVisibility(LinearLayout.GONE);
                     return true;
                 case R.id.place:
-                    getCurrentLocation();
-                    if (locationPermissionGranted && lastLocation != null) {
-                        moveMapToCurrentLocation();
-                        NearbyLocationSearch searcher = new NearbyLocationSearch(getApplicationContext(),
-                                lastLocation.getLatitude(), lastLocation.getLongitude(), "atm");
-                        searcher.execute(mMap);
-                    }
+                    popupMenu.show();
                     informationLocation.setVisibility(LinearLayout.GONE);
                     return true;
                 case R.id.favorite:
@@ -370,6 +364,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }
         });
+
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                getCurrentLocation();
+                if (locationPermissionGranted && lastLocation != null) {
+                    mMap.clear();
+                    moveMapToCurrentLocation();
+                    String type="";
+                    switch (item.getItemId()) {
+                        case R.id.menuATM:
+                            type="atm";
+                            break;
+                        case R.id.menuCafe:
+                            type="cafe";
+                            break;
+                        case R.id.menuGasStation:
+                            type="gas_station";
+                            break;
+                        case R.id.menuGym:
+                            type="gym";
+                            break;
+                        case R.id.menuRestaurant:
+                            type="restaurant";
+                            break;
+                        case R.id.menuSchool:
+                            type="school";
+                            break;
+                    }
+                    NearbyLocationSearch searcher = new NearbyLocationSearch(getApplicationContext(),
+                            lastLocation.getLatitude(), lastLocation.getLongitude(), type);
+                    searcher.execute(mMap);
+                    return true;
+                }
+                return false;
+            }
+        });
     }
 
     // Kiểm tra và xin cấp quyền sử dụng vị trí
@@ -430,7 +461,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (routes.size() == 0) return;
 
         for (Route route : routes) {
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(route.startLocation, 16));
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(route.startLocation, DEFAULT_MAP_HEIGHT));
             tvDuration.setText(route.duration.text);
             tvDistance.setText(route.distance.text);
 

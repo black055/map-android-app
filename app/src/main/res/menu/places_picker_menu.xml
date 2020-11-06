@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menuATM"
+        android:icon="@drawable/ic_baseline_local_atm_24"
+        android:title="ATM" />
+    <item
+        android:id="@+id/menuSchool"
+        android:title="Trường học" />
+    <item
+        android:id="@+id/menuGasStation"
+        android:title="Trạm xăng" />
+    <item
+        android:id="@+id/menuCafe"
+        android:title="Quán cafe" />
+    <item
+        android:id="@+id/menuRestaurant"
+        android:title="Nhà hàng, quán ăn" />
+    <item
+        android:id="@+id/menuGym"
+        android:title="Phòng tập" />
+</menu>
