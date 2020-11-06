@@ -15,7 +15,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.view.View;import android.view.inputmethod.InputMethodManager;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -45,19 +45,22 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import modules.DirectionFinder;
 import modules.DirectionFinderListener;
+import modules.PlaceObject;
 import modules.Route;
+import modules.DBManager;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, DirectionFinderListener {
 
     private final int RQCODE_FOR_PERMISSION = 1;
     private final int RQCODE_FOR_SEARCH = 2;
+    private final int RQCODE_FROM_FAVORITE = 3;
+    private final int RQCODE_FROM_HISTORY = 4;
     private final int DEFAULT_MAP_HEIGHT = 17;
 
     private boolean locationPermissionGranted;
@@ -79,6 +82,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LatLng defaultLocation;
     private EditText searchLocation;
     private ImageView btnCurLocation;
+    private FloatingActionButton btnShare;
 
     // MapType Option
     FloatingActionButton btnSelectType, btnSatellite, btnTerrain, btnDefault;
@@ -90,10 +94,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     // Location information
     LinearLayout informationLocation;
     TextView nameLocation, phoneLocation, ratingLocation, addressLocation, priceLevel;
-
-    // List places
-    List<Place> favorite;
-    List<Place> history;
+    DBManager dbManager;
+    Button btnAddFav;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,6 +128,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnFindPathBack = findViewById(R.id.btnFindPathBack);
         btnFindPath = findViewById(R.id.btnFindPath);
 
+
         //send request
         btnFindPath.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -145,7 +148,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnTerrain = findViewById(R.id.map_terrain);
         btnDefault = findViewById(R.id.map_default);
         btnCurLocation = findViewById(R.id.btnCurLocation);
-
+        btnShare = findViewById(R.id.btnShare);
 
         informationLocation = findViewById(R.id.infoLayout);
         nameLocation = findViewById(R.id.namePos);
@@ -154,6 +157,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         addressLocation = findViewById(R.id.address);
         priceLevel = findViewById(R.id.price_level);
 
+        btnAddFav = informationLocation.findViewById(R.id.btnAddFav);
+
         // ẩn ban đầu cho một số view
         selectedMaptype = false;
         btnDefault.hide();
@@ -161,6 +166,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnTerrain.hide();
         informationLocation.setVisibility(LinearLayout.GONE);
 
+        dbManager = new DBManager(this);
         setActionListener();
     }
 
@@ -200,9 +206,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     informationLocation.setVisibility(LinearLayout.GONE);
                     return true;
                 case R.id.favorite:
+                    Intent intent_favorite = new Intent(MapsActivity.this, FavoriteActivity.class);
+                    startActivityForResult(intent_favorite, RQCODE_FROM_FAVORITE);
                     informationLocation.setVisibility(LinearLayout.GONE);
                     return true;
                 case R.id.history:
+                    Intent intent_history = new Intent(MapsActivity.this, HistoryActivity.class);
+                    startActivityForResult(intent_history, RQCODE_FROM_HISTORY);
                     informationLocation.setVisibility(LinearLayout.GONE);
                     return true;
             }
@@ -346,6 +356,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 startActivityForResult(intent, RQCODE_FOR_SEARCH);
             }
         });*/
+
+        btnShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getCurrentLocation();
+                if (lastLocation != null) {
+                    Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                    sharingIntent.setType("text/plain");
+                    sharingIntent.putExtra(Intent.EXTRA_TEXT, "https://maps.google.com?q="
+                    + lastLocation.getLatitude() + "," + lastLocation.getLongitude());
+                    startActivity(Intent.createChooser(sharingIntent, "Share via"));
+                }
+            }
+        });
     }
 
     // Kiểm tra và xin cấp quyền sử dụng vị trí
@@ -455,7 +479,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == RQCODE_FOR_SEARCH && resultCode == RESULT_OK) {
-            Place place = Autocomplete.getPlaceFromIntent(data);
+            final Place place = Autocomplete.getPlaceFromIntent(data);
             searchLocation.setText(place.getAddress());
             nameLocation.setText(place.getName());
             addressLocation.setText(place.getAddress());
@@ -483,8 +507,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             informationLocation.setVisibility(LinearLayout.VISIBLE);
 
+            // listener cho button add favorite
+            btnAddFav.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dbManager.FAVORITE_addPlace(new PlaceObject(place.getName(), place.getAddress(), place.getLatLng()));
+                }
+            });
+
+            // thêm vào lịch sử tìm kiếm
+            dbManager.HISTORY_addPlace(new PlaceObject(place.getName(), place.getAddress(), place.getLatLng()));
+
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), DEFAULT_MAP_HEIGHT));
             mMap.addMarker(new MarkerOptions().position(place.getLatLng()).title(place.getAddress()));
+        }
+
+        if (resultCode == RESULT_OK && requestCode == RQCODE_FROM_FAVORITE && data != null) {
+            int pos = data.getIntExtra("position", 0) + 1;
+            PlaceObject place = dbManager.FAVORITE_getPlace(pos);
+            mMap.clear();
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatlong(), DEFAULT_MAP_HEIGHT));
+            mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress()));
+        }
+
+        if (resultCode == RESULT_OK && requestCode == RQCODE_FROM_HISTORY && data != null) {
+            int pos = data.getIntExtra("position", 0) + 1;
+            PlaceObject place = dbManager.HISTORY_getPlace(pos);
+            mMap.clear();
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatlong(), DEFAULT_MAP_HEIGHT));
+            mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress()));
         }
     }
 }
