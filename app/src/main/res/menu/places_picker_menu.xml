@@ -7,17 +7,22 @@
         android:title="ATM" />
     <item
         android:id="@+id/menuSchool"
+        android:icon="@drawable/ic_baseline_school_24"
         android:title="Trường học" />
     <item
         android:id="@+id/menuGasStation"
+        android:icon="@drawable/ic_baseline_local_gas_station_24"
         android:title="Trạm xăng" />
     <item
         android:id="@+id/menuCafe"
+        android:icon="@drawable/ic_baseline_local_cafe_24"
         android:title="Quán cafe" />
     <item
         android:id="@+id/menuRestaurant"
+        android:icon="@drawable/ic_baseline_restaurant_24"
         android:title="Nhà hàng, quán ăn" />
     <item
         android:id="@+id/menuGym"
+        android:icon="@drawable/ic_baseline_fitness_center_24"
         android:title="Phòng tập" />
 </menu>
