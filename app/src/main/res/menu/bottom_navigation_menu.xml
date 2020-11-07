@@ -1,32 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/home"
+        android:title="Trang chủ"
+        android:enabled="true"
+        android:icon="@drawable/ic_baseline_home_work_24"/>
+
+    <item
         android:id="@+id/find"
         android:enabled="true"
         android:icon="@drawable/ic_baseline_search_24_button"
-        android:title="Find" />
+        android:title="Tìm kiếm" />
 
     <item
         android:id="@+id/place"
         android:enabled="true"
         android:icon="@drawable/ic_baseline_place_24"
-        android:title="Place" />
+        android:title="Địa điểm" />
 
     <item
         android:id="@+id/favorite"
         android:enabled="true"
         android:icon="@drawable/ic_baseline_favorite_24"
-        android:title="Favorite" />
+        android:title="Yêu thích" />
 
     <item
         android:id="@+id/history"
         android:enabled="true"
         android:icon="@drawable/ic_baseline_history_24"
-        android:title="History" />
-
-    <item
-        android:id="@+id/invisible"
-        android:title="None"
-        android:enabled="true"
-        android:visible="false"/>
+        android:title="Lịch sử"
+        android:visibility="visible" />
 </menu>

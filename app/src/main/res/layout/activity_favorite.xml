@@ -29,8 +29,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="15dp"
-            android:text="Your favorite places"
-            android:textSize="24sp" />
+            android:text="Danh sách địa điểm yêu thích"
+            android:textSize="22sp" />
     </LinearLayout>
 
     <ListView
