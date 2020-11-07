@@ -17,7 +17,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -130,8 +132,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Thêm find path
         llFindPath = findViewById(R.id.llFindPath);
-        edtOrigin = findViewById(R.id.edtOrigin);
-        edtDestination = findViewById(R.id.edtDestination);
+        edtOrigin = findViewById(R.id.edtOrigin); edtOrigin.setFocusable(false);
+        edtDestination = findViewById(R.id.edtDestination); edtDestination.setFocusable(false);
         tvDistance = findViewById(R.id.tvDistance);
         tvDuration = findViewById(R.id.tvDuration);
         btnFindPathBack = findViewById(R.id.btnFindPathBack);
