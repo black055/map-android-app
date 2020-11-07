@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -15,11 +16,12 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -28,7 +30,6 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -45,8 +46,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.Autocomplete;
-import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
-import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -56,6 +55,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import modules.DirectionFinder;
 import modules.DirectionFinderListener;
@@ -65,6 +65,7 @@ import modules.DBManager;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, DirectionFinderListener {
 
+    // Request code for Intent
     private final int RQCODE_FOR_PERMISSION = 1;
     private final int RQCODE_FOR_SEARCH = 2;
     private final int RQCODE_FROM_FAVORITE = 3;
@@ -87,6 +88,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private List<Polyline> polylinePaths = new ArrayList<>();
     private Button btnFindPathBack, btnFindPath;
     private PopupMenu popupMenu;
+    private boolean isFindingPath;
     //---------
     private Location lastLocation;
     private LatLng defaultLocation;
@@ -99,13 +101,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     boolean selectedMaptype;
 
     // Navigation Bar
-    public BottomNavigationView navigation;
+    private BottomNavigationView navigation;
+    private String menuSelected;
 
     // Location information
-    LinearLayout informationLocation;
-    TextView nameLocation, phoneLocation, ratingLocation, addressLocation, priceLevel;
-    DBManager dbManager;
-    Button btnAddFav;
+    private LinearLayout informationLocation;
+    private TextView nameLocation, phoneLocation, ratingLocation, addressLocation, priceLevel;
+    private Button btnAddFav;
+
+    // Data base
+    private DBManager dbManager;
+
+    // Intro
+    private LinearLayout layoutIntro;
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
@@ -121,9 +129,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         geocoder = new Geocoder(MapsActivity.this);
         searchLocation = findViewById(R.id.searchLocation);
         searchLocation.setFocusable(false);
+
         // Kiểm tra đã cấp quyền truy cập vào vị trí chưa
-        if (ContextCompat.checkSelfPermission(MapsActivity.this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(MapsActivity.this.getApplicationContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationPermissionGranted = true;
         } else locationPermissionGranted = false;
 
@@ -138,15 +147,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         tvDuration = findViewById(R.id.tvDuration);
         btnFindPathBack = findViewById(R.id.btnFindPathBack);
         btnFindPath = findViewById(R.id.btnFindPath);
+        isFindingPath = false;
 
         // Thêm navigation bar
         navigation = (BottomNavigationView) findViewById(R.id.bottom_navigation);
-        navigation.setSelectedItemId(R.id.invisible);
+        navigation.setSelectedItemId(R.id.home);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         popupMenu = new PopupMenu(MapsActivity.this, navigation);
         popupMenu.getMenuInflater().inflate(R.menu.places_picker_menu, popupMenu.getMenu());
         popupMenu.setForceShowIcon(true);
-        // Thêm Chọn Mape Type
+
+        // Component để hiển thị lựa chọn kiểu bản đồ
         btnSelectType = findViewById(R.id.floating_button_map_type);
         btnSatellite = findViewById(R.id.map_satellite);
         btnTerrain = findViewById(R.id.map_terrain);
@@ -154,14 +165,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnCurLocation = findViewById(R.id.btnCurLocation);
         btnShare = findViewById(R.id.btnShare);
 
+        // Component để hiển thị thông tin của địa điểm được tìm thấy
         informationLocation = findViewById(R.id.infoLayout);
         nameLocation = findViewById(R.id.namePos);
         phoneLocation = findViewById(R.id.phonePos);
         ratingLocation = findViewById(R.id.rating);
         addressLocation = findViewById(R.id.address);
         priceLevel = findViewById(R.id.price_level);
-
         btnAddFav = informationLocation.findViewById(R.id.btnAddFav);
+
+        layoutIntro = findViewById(R.id.layoutIntro);
 
         // ẩn ban đầu cho một số view
         selectedMaptype = false;
@@ -171,7 +184,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         informationLocation.setVisibility(LinearLayout.GONE);
 
         dbManager = new DBManager(this);
+        navigation.setVisibility(View.GONE);
+        btnShare.setVisibility(View.GONE);
+        btnSelectType.setVisibility(View.GONE);
         setActionListener();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!isFindingPath) navigation.setSelectedItemId(R.id.home);
     }
 
     // TODO: Sử lý các các tính năng tại đây
@@ -180,40 +202,37 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
+                case R.id.home:
+                    searchLocation.setVisibility(View.VISIBLE);
+                    llFindPath.setVisibility(View.GONE);
+                    menuSelected = "home";
+                    return true;
                 case R.id.find:
                     //llFindPath.animate().translationY(llFindPath.getHeight());
                     //Hiện thanh tìm kiếm 2 địa điểm
                     llFindPath.setVisibility(View.VISIBLE);
                     //Ẩn thanh search location
                     searchLocation.setVisibility(View.GONE);
-                    //Xử lí nút Back quay về giao diện chính
-                    btnFindPathBack.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            //llFindPath.animate().translationY(0);
-                            llFindPath.setVisibility(View.GONE);
-                            searchLocation.setVisibility(View.VISIBLE);
-                            edtOrigin.setText("");
-                            edtDestination.setText("");
-                            tvDistance.setText(R.string.init_kilometer);
-                            tvDuration.setText(R.string.init_second);
-                        }
-                    });
+                    isFindingPath = true;
                     informationLocation.setVisibility(LinearLayout.GONE);
+                    menuSelected = "find";
                     return true;
                 case R.id.place:
+                    searchLocation.setVisibility(View.VISIBLE);
+                    llFindPath.setVisibility(View.GONE);
                     popupMenu.show();
                     informationLocation.setVisibility(LinearLayout.GONE);
+                    menuSelected = "place";
                     return true;
                 case R.id.favorite:
                     Intent intent_favorite = new Intent(MapsActivity.this, FavoriteActivity.class);
                     startActivityForResult(intent_favorite, RQCODE_FROM_FAVORITE);
-                    informationLocation.setVisibility(LinearLayout.GONE);
+                    menuSelected = "favorite";
                     return true;
                 case R.id.history:
                     Intent intent_history = new Intent(MapsActivity.this, HistoryActivity.class);
                     startActivityForResult(intent_history, RQCODE_FROM_HISTORY);
-                    informationLocation.setVisibility(LinearLayout.GONE);
+                    menuSelected = "history";
                     return true;
             }
             return false;
@@ -226,7 +245,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         //mMap.setPadding(0, 1600, 0, 140);
         mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT), new GoogleMap.CancelableCallback() {
+            @Override
+            public void onFinish() {
+                navigation.setVisibility(View.VISIBLE);
+                btnShare.setVisibility(View.VISIBLE);
+                btnSelectType.setVisibility(View.VISIBLE);
+                layoutIntro.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onCancel() {
+
+            }
+        });
     }
 
     // Chuyển màn hình đến vị trí hiện tại của thiết bị
@@ -378,6 +410,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View v) {
                 sendRequest();
+            }
+        });
+
+        //Xử lí nút Back quay về giao diện chính
+        btnFindPathBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //llFindPath.animate().translationY(0);
+                llFindPath.setVisibility(View.GONE);
+                searchLocation.setVisibility(View.VISIBLE);
+                edtOrigin.setText("");
+                edtDestination.setText("");
+                tvDistance.setText(R.string.init_kilometer);
+                tvDuration.setText(R.string.init_second);
+                isFindingPath = false;
             }
         });
 
@@ -574,6 +621,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         if (resultCode == RESULT_OK && requestCode == RQCODE_FROM_FAVORITE && data != null) {
+            navigation.setSelectedItemId(R.id.home);
             int pos = data.getIntExtra("position", 0) + 1;
             PlaceObject place = dbManager.FAVORITE_getPlace(pos);
             mMap.clear();
@@ -582,6 +630,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         if (resultCode == RESULT_OK && requestCode == RQCODE_FROM_HISTORY && data != null) {
+            navigation.setSelectedItemId(R.id.home);
             int pos = data.getIntExtra("position", 0) + 1;
             PlaceObject place = dbManager.HISTORY_getPlace(pos);
             mMap.clear();

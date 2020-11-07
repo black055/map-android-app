@@ -1,0 +1,233 @@
+Index: app/src/main/java/com/example/map_application/MapsActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.example.map_application;\r\n\r\nimport androidx.annotation.NonNull;\r\nimport androidx.annotation.Nullable;\r\nimport androidx.annotation.RequiresApi;\r\nimport androidx.core.app.ActivityCompat;\r\nimport androidx.core.content.ContextCompat;\r\nimport androidx.fragment.app.FragmentActivity;\r\n\r\nimport android.Manifest;\r\nimport android.content.Intent;\r\nimport android.content.pm.PackageManager;\r\nimport android.location.Address;\r\nimport android.location.Geocoder;\r\nimport android.location.Location;\r\nimport android.os.Build;\r\nimport android.os.Bundle;\r\nimport android.view.MenuItem;\r\nimport android.view.View;\r\nimport android.widget.Button;\r\nimport android.widget.EditText;\r\nimport android.widget.ImageView;\r\nimport android.widget.LinearLayout;\r\nimport android.widget.PopupMenu;\r\nimport android.widget.TextView;\r\nimport android.widget.Toast;\r\n\r\nimport com.google.android.gms.location.LocationServices;\r\nimport com.google.android.gms.maps.CameraUpdateFactory;\r\nimport com.google.android.gms.maps.GoogleMap;\r\nimport com.google.android.gms.maps.OnMapReadyCallback;\r\nimport com.google.android.gms.maps.SupportMapFragment;\r\nimport com.google.android.gms.maps.model.BitmapDescriptorFactory;\r\nimport com.google.android.gms.maps.model.LatLng;\r\nimport com.google.android.gms.maps.model.Marker;\r\nimport com.google.android.gms.maps.model.MarkerOptions;\r\nimport com.google.android.gms.maps.model.Polyline;\r\nimport com.google.android.gms.maps.model.PolylineOptions;\r\nimport com.google.android.gms.tasks.OnCompleteListener;\r\nimport com.google.android.gms.tasks.Task;\r\nimport com.google.android.libraries.places.api.Places;\r\nimport com.google.android.libraries.places.api.model.Place;\r\nimport com.google.android.libraries.places.widget.Autocomplete;\r\nimport com.google.android.libraries.places.widget.model.AutocompleteActivityMode;\r\nimport com.google.android.material.bottomnavigation.BottomNavigationView;\r\nimport com.google.android.material.floatingactionbutton.FloatingActionButton;\r\n\r\nimport java.io.IOException;\r\nimport java.io.UnsupportedEncodingException;\r\nimport java.util.ArrayList;\r\nimport java.util.Arrays;\r\nimport java.util.List;\r\n\r\nimport modules.DirectionFinder;\r\nimport modules.DirectionFinderListener;\r\nimport modules.PlaceObject;\r\nimport modules.Route;\r\nimport modules.DBManager;\r\n\r\npublic class MapsActivity extends FragmentActivity implements OnMapReadyCallback, DirectionFinderListener {\r\n\r\n    private final int RQCODE_FOR_PERMISSION = 1;\r\n    private final int RQCODE_FOR_SEARCH = 2;\r\n    private final int RQCODE_FROM_FAVORITE = 3;\r\n    private final int RQCODE_FROM_HISTORY = 4;\r\n    private final int DEFAULT_MAP_HEIGHT = 17;\r\n\r\n    private boolean locationPermissionGranted;\r\n    private GoogleMap mMap;\r\n    private Geocoder geocoder;\r\n\r\n\r\n    //find path\r\n    private EditText edtOrigin, edtDestination;\r\n    private TextView tvDuration, tvDistance;\r\n    private LinearLayout llFindPath;\r\n    private List<Marker> originMarkers = new ArrayList<>();\r\n    private List<Marker> destinationMarkers = new ArrayList<>();\r\n    private List<Polyline> polylinePaths = new ArrayList<>();\r\n    private Button btnFindPathBack, btnFindPath;\r\n    private PopupMenu popupMenu;\r\n    //---------\r\n    private Location lastLocation;\r\n    private LatLng defaultLocation;\r\n    private EditText searchLocation;\r\n    private ImageView btnCurLocation;\r\n    private FloatingActionButton btnShare;\r\n\r\n    // MapType Option\r\n    FloatingActionButton btnSelectType, btnSatellite, btnTerrain, btnDefault;\r\n    boolean selectedMaptype;\r\n\r\n    // Navigation Bar\r\n    public BottomNavigationView navigation;\r\n\r\n    // Location information\r\n    LinearLayout informationLocation;\r\n    TextView nameLocation, phoneLocation, ratingLocation, addressLocation, priceLevel;\r\n    DBManager dbManager;\r\n    Button btnAddFav;\r\n\r\n    @RequiresApi(api = Build.VERSION_CODES.Q)\r\n    @Override\r\n    protected void onCreate(Bundle savedInstanceState) {\r\n        super.onCreate(savedInstanceState);\r\n        setContentView(R.layout.activity_maps);\r\n\r\n        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()\r\n                .findFragmentById(R.id.map);\r\n        mapFragment.getMapAsync(this);\r\n        Places.initialize(getApplicationContext(), getResources().getString(R.string.google_maps_key));\r\n\r\n        geocoder = new Geocoder(MapsActivity.this);\r\n        searchLocation = findViewById(R.id.searchLocation);\r\n        searchLocation.setFocusable(false);\r\n        // Kiểm tra đã cấp quyền truy cập vào vị trí chưa\r\n        if (ContextCompat.checkSelfPermission(MapsActivity.this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)\r\n                == PackageManager.PERMISSION_GRANTED) {\r\n            locationPermissionGranted = true;\r\n        } else locationPermissionGranted = false;\r\n\r\n        // Tọa độ mặc định của ứng dụng\r\n        defaultLocation = new LatLng(10.8759, 106.7992);\r\n\r\n        // Thêm find path\r\n        llFindPath = findViewById(R.id.llFindPath);\r\n        edtOrigin = findViewById(R.id.edtOrigin);\r\n        edtDestination = findViewById(R.id.edtDestination);\r\n        tvDistance = findViewById(R.id.tvDistance);\r\n        tvDuration = findViewById(R.id.tvDuration);\r\n        btnFindPathBack = findViewById(R.id.btnFindPathBack);\r\n        btnFindPath = findViewById(R.id.btnFindPath);\r\n\r\n        //send request\r\n        btnFindPath.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                sendRequest();\r\n            }\r\n        });\r\n\r\n        // Thêm navigation bar\r\n        navigation = (BottomNavigationView) findViewById(R.id.bottom_navigation);\r\n        navigation.setSelectedItemId(R.id.invisible);\r\n        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);\r\n        popupMenu = new PopupMenu(MapsActivity.this, navigation);\r\n        popupMenu.getMenuInflater().inflate(R.menu.places_picker_menu, popupMenu.getMenu());\r\n        popupMenu.setForceShowIcon(true);\r\n        // Thêm Chọn Mape Type\r\n        btnSelectType = findViewById(R.id.floating_button_map_type);\r\n        btnSatellite = findViewById(R.id.map_satellite);\r\n        btnTerrain = findViewById(R.id.map_terrain);\r\n        btnDefault = findViewById(R.id.map_default);\r\n        btnCurLocation = findViewById(R.id.btnCurLocation);\r\n        btnShare = findViewById(R.id.btnShare);\r\n\r\n        informationLocation = findViewById(R.id.infoLayout);\r\n        nameLocation = findViewById(R.id.namePos);\r\n        phoneLocation = findViewById(R.id.phonePos);\r\n        ratingLocation = findViewById(R.id.rating);\r\n        addressLocation = findViewById(R.id.address);\r\n        priceLevel = findViewById(R.id.price_level);\r\n\r\n        btnAddFav = informationLocation.findViewById(R.id.btnAddFav);\r\n\r\n        // ẩn ban đầu cho một số view\r\n        selectedMaptype = false;\r\n        btnDefault.hide();\r\n        btnSatellite.hide();\r\n        btnTerrain.hide();\r\n        informationLocation.setVisibility(LinearLayout.GONE);\r\n\r\n        dbManager = new DBManager(this);\r\n        setActionListener();\r\n    }\r\n\r\n    // TODO: Sử lý các các tính năng tại đây\r\n    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {\r\n\r\n        @Override\r\n        public boolean onNavigationItemSelected(@NonNull MenuItem item) {\r\n            switch (item.getItemId()) {\r\n                case R.id.find:\r\n                    //Ẩn thanh search location\r\n                    searchLocation.setVisibility(View.GONE);\r\n                    //Hiện thanh tìm kiếm 2 địa điểm\r\n                    llFindPath.setVisibility(View.VISIBLE);\r\n                    //Xử lí nút back quay về giao diện chính\r\n                    btnFindPathBack.setOnClickListener(new View.OnClickListener() {\r\n                        @Override\r\n                        public void onClick(View v) {\r\n                            llFindPath.setVisibility(View.GONE);\r\n                            searchLocation.setVisibility(View.VISIBLE);\r\n                            edtOrigin.setText(\"\");\r\n                            edtDestination.setText(\"\");\r\n                            tvDistance.setText(R.string.init_kilometer);\r\n                            tvDuration.setText(R.string.init_second);\r\n                        }\r\n                    });\r\n                    informationLocation.setVisibility(LinearLayout.GONE);\r\n                    return true;\r\n                case R.id.place:\r\n                    popupMenu.show();\r\n                    informationLocation.setVisibility(LinearLayout.GONE);\r\n                    return true;\r\n                case R.id.favorite:\r\n                    Intent intent_favorite = new Intent(MapsActivity.this, FavoriteActivity.class);\r\n                    startActivityForResult(intent_favorite, RQCODE_FROM_FAVORITE);\r\n                    informationLocation.setVisibility(LinearLayout.GONE);\r\n                    return true;\r\n                case R.id.history:\r\n                    Intent intent_history = new Intent(MapsActivity.this, HistoryActivity.class);\r\n                    startActivityForResult(intent_history, RQCODE_FROM_HISTORY);\r\n                    informationLocation.setVisibility(LinearLayout.GONE);\r\n                    return true;\r\n            }\r\n            return false;\r\n        }\r\n    };\r\n\r\n\r\n    @Override\r\n    public void onMapReady(GoogleMap googleMap) {\r\n        mMap = googleMap;\r\n        //mMap.setPadding(0, 1600, 0, 140);\r\n        mMap.addMarker(new MarkerOptions().position(defaultLocation).title(\"Đại học Khoa học tự nhiên - ĐHQG TPHCM\"));\r\n        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));\r\n    }\r\n\r\n    // Chuyển màn hình đến vị trí hiện tại của thiết bị\r\n    private void getCurrentLocation() {\r\n        if (locationPermissionGranted) {\r\n            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {\r\n                return;\r\n            }\r\n            Task<Location> locationResult = LocationServices.getFusedLocationProviderClient(MapsActivity.this).getLastLocation();\r\n\r\n            locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {\r\n                @Override\r\n                public void onComplete(@NonNull Task<Location> task) {\r\n                    if (task.isSuccessful()) {\r\n                        lastLocation = task.getResult();\r\n                    }\r\n                }\r\n            });\r\n        } else getLocationPermission();\r\n    }\r\n\r\n    private void moveMapToCurrentLocation() {\r\n        LatLng location = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());\r\n        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, DEFAULT_MAP_HEIGHT));\r\n        Address address = null;\r\n        try {\r\n            address = geocoder.getFromLocation(lastLocation.getLatitude(),lastLocation.getLongitude(), 1).get(0);\r\n        } catch (IOException e) {\r\n            e.printStackTrace();\r\n        }\r\n        // Nếu lấy được địa chỉ chi tiết thì hiển thị trên marker, không thì hiển thị \"Your current location\"\r\n        if (address != null && address.getAddressLine(0) != null)\r\n            mMap.addMarker(new MarkerOptions().position(location).title(address.getAddressLine(0)));\r\n        else\r\n            mMap.addMarker(new MarkerOptions().position(location).title(\"Your current location\"));\r\n    }\r\n\r\n    private void setActionListener() {\r\n\r\n        btnCurLocation.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                if (informationLocation.getVisibility() == LinearLayout.VISIBLE) {\r\n                    informationLocation.setVisibility(LinearLayout.GONE);\r\n                }\r\n                getCurrentLocation();\r\n                // Nếu lấy được vị trí hiện tại thì chuyển camera đến vị trí hiện tại, nếu không thì chuyển đến vị trí mặc định\r\n                if (lastLocation != null) {\r\n                    moveMapToCurrentLocation();\r\n                } else {\r\n                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));\r\n                }\r\n            }\r\n        });\r\n\r\n        searchLocation.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME\r\n                        , Place.Field.RATING, Place.Field.PHONE_NUMBER, Place.Field.PRICE_LEVEL);\r\n                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList).build(MapsActivity.this);\r\n                startActivityForResult(intent, RQCODE_FOR_SEARCH);\r\n            }\r\n        });\r\n\r\n        // Thay đổi MapType\r\n        btnSelectType.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                if (selectedMaptype) {\r\n                    btnDefault.hide();\r\n                    btnSatellite.hide();\r\n                    btnTerrain.hide();\r\n                    selectedMaptype = false;\r\n                }\r\n\r\n                else if (!selectedMaptype) {\r\n                    btnTerrain.show();\r\n                    btnSatellite.show();\r\n                    btnDefault.show();;\r\n                    selectedMaptype = true;\r\n                }\r\n            }\r\n        });\r\n\r\n        btnDefault.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                if (mMap.getMapType() != GoogleMap.MAP_TYPE_NORMAL) {\r\n                    mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);\r\n                }\r\n            }\r\n        });\r\n\r\n        btnSatellite.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                if (mMap.getMapType() != GoogleMap.MAP_TYPE_SATELLITE) {\r\n                    mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);\r\n                }\r\n            }\r\n        });\r\n\r\n        btnTerrain.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                if (mMap.getMapType() != GoogleMap.MAP_TYPE_TERRAIN) {\r\n                    mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);\r\n                }\r\n            }\r\n        });\r\n\r\n        /*edtOrigin.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME);\r\n                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList).build(MapsActivity.this);\r\n                startActivityForResult(intent, RQCODE_FOR_SEARCH);\r\n            }\r\n        });\r\n\r\n        edtDestination.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME);\r\n                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList).build(MapsActivity.this);\r\n                startActivityForResult(intent, RQCODE_FOR_SEARCH);\r\n            }\r\n        });*/\r\n\r\n        btnShare.setOnClickListener(new View.OnClickListener() {\r\n            @Override\r\n            public void onClick(View v) {\r\n                getCurrentLocation();\r\n                if (lastLocation != null) {\r\n                    Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);\r\n                    sharingIntent.setType(\"text/plain\");\r\n                    sharingIntent.putExtra(Intent.EXTRA_TEXT, \"https://maps.google.com?q=\"\r\n                    + lastLocation.getLatitude() + \",\" + lastLocation.getLongitude());\r\n                    startActivity(Intent.createChooser(sharingIntent, \"Share via\"));\r\n                }\r\n            }\r\n        });\r\n\r\n        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {\r\n            @Override\r\n            public boolean onMenuItemClick(MenuItem item) {\r\n                getCurrentLocation();\r\n                if (locationPermissionGranted && lastLocation != null) {\r\n                    mMap.clear();\r\n                    moveMapToCurrentLocation();\r\n                    String type=\"\";\r\n                    switch (item.getItemId()) {\r\n                        case R.id.menuATM:\r\n                            type=\"atm\";\r\n                            break;\r\n                        case R.id.menuCafe:\r\n                            type=\"cafe\";\r\n                            break;\r\n                        case R.id.menuGasStation:\r\n                            type=\"gas_station\";\r\n                            break;\r\n                        case R.id.menuGym:\r\n                            type=\"gym\";\r\n                            break;\r\n                        case R.id.menuRestaurant:\r\n                            type=\"restaurant\";\r\n                            break;\r\n                        case R.id.menuSchool:\r\n                            type=\"school\";\r\n                            break;\r\n                    }\r\n                    NearbyLocationSearch searcher = new NearbyLocationSearch(getApplicationContext(),\r\n                            lastLocation.getLatitude(), lastLocation.getLongitude(), type);\r\n                    searcher.execute(mMap);\r\n                    return true;\r\n                }\r\n                return false;\r\n            }\r\n        });\r\n    }\r\n\r\n    // Kiểm tra và xin cấp quyền sử dụng vị trí\r\n    private void getLocationPermission() {\r\n        if (ContextCompat.checkSelfPermission(MapsActivity.this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)\r\n                == PackageManager.PERMISSION_GRANTED) {\r\n            locationPermissionGranted = true;\r\n            getCurrentLocation();\r\n        }\r\n        else ActivityCompat.requestPermissions(MapsActivity.this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, RQCODE_FOR_PERMISSION);\r\n    }\r\n\r\n    @Override\r\n    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {\r\n        // Xử lí kết quả xin cấp quyền\r\n        locationPermissionGranted = false;\r\n\r\n        // requestCode của xin cấp quyền xử dụng vị trí\r\n        if (requestCode == RQCODE_FOR_PERMISSION) {\r\n            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {\r\n                locationPermissionGranted = true;\r\n                getCurrentLocation();\r\n            }\r\n        }\r\n    }\r\n\r\n    //Find path-----------\r\n    @Override\r\n    public void onDirectionFinderStart() {\r\n        /*progressDialog = ProgressDialog.show(this, \"Please wait.\",\r\n                \"Finding direction..!\", true);*/\r\n\r\n        if (originMarkers != null) {\r\n            for (Marker marker : originMarkers) {\r\n                marker.remove();\r\n            }\r\n        }\r\n\r\n        if (destinationMarkers != null) {\r\n            for (Marker marker : destinationMarkers) {\r\n                marker.remove();\r\n            }\r\n        }\r\n\r\n        if (polylinePaths != null) {\r\n            for (Polyline polyline:polylinePaths ) {\r\n                polyline.remove();\r\n            }\r\n        }\r\n    }\r\n\r\n    @Override\r\n    public void onDirectionFinderSuccess(List<Route> routes) {\r\n        polylinePaths = new ArrayList<>();\r\n        originMarkers = new ArrayList<>();\r\n        destinationMarkers = new ArrayList<>();\r\n\r\n        if (routes.size() == 0) return;\r\n\r\n        for (Route route : routes) {\r\n            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(route.startLocation, DEFAULT_MAP_HEIGHT));\r\n            tvDuration.setText(route.duration.text);\r\n            tvDistance.setText(route.distance.text);\r\n\r\n            originMarkers.add(mMap.addMarker(new MarkerOptions()\r\n                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.blue_start_32))\r\n                    .title(route.startAddress)\r\n                    .position(route.startLocation)));\r\n            destinationMarkers.add(mMap.addMarker(new MarkerOptions()\r\n                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.red_end_32))\r\n                    .title(route.endAddress)\r\n                    .position(route.endLocation)));\r\n\r\n            PolylineOptions polylineOptions = new PolylineOptions().\r\n                    geodesic(true).\r\n                    color(R.color.quantum_lightblue).\r\n                    width(10);\r\n\r\n            for (int i = 0; i < route.points.size(); i++)\r\n                polylineOptions.add(route.points.get(i));\r\n\r\n            polylinePaths.add(mMap.addPolyline(polylineOptions));\r\n        }\r\n    }\r\n\r\n    private void sendRequest() {\r\n        String origin = edtOrigin.getText().toString();\r\n        String destination = edtDestination.getText().toString();\r\n        if (origin.isEmpty()) {\r\n            Toast.makeText(this, \"Please enter origin address!\", Toast.LENGTH_SHORT).show();\r\n            return;\r\n        }\r\n        if (destination.isEmpty()) {\r\n            Toast.makeText(this, \"Please enter destination address!\", Toast.LENGTH_SHORT).show();\r\n            return;\r\n        }\r\n\r\n        try {\r\n            new DirectionFinder(this, origin, destination).execute();\r\n        } catch (UnsupportedEncodingException e) {\r\n            e.printStackTrace();\r\n        }\r\n    }\r\n    //-----------------------------------------------------------\r\n\r\n    @Override\r\n    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {\r\n        super.onActivityResult(requestCode, resultCode, data);\r\n        if (requestCode == RQCODE_FOR_SEARCH && resultCode == RESULT_OK) {\r\n            final Place place = Autocomplete.getPlaceFromIntent(data);\r\n            searchLocation.setText(place.getAddress());\r\n            nameLocation.setText(place.getName());\r\n            addressLocation.setText(place.getAddress());\r\n            // check phone number\r\n            if (place.getPhoneNumber() != null) {\r\n                phoneLocation.setText(\"Phone number: \" + place.getPhoneNumber());\r\n            }\r\n            else\r\n                phoneLocation.setVisibility(View.GONE);\r\n\r\n            // check rating\r\n            if (place.getRating() != null) {\r\n                ratingLocation.setText(\"Rating : \" + place.getRating());\r\n            }\r\n            else\r\n                ratingLocation.setVisibility(View.GONE);\r\n\r\n\r\n            // check price level\r\n            if (place.getPriceLevel() != null) {\r\n                priceLevel.setText(\"Price level: \" + place.getPriceLevel());\r\n            }\r\n            else\r\n                priceLevel.setVisibility(View.GONE);\r\n\r\n            informationLocation.setVisibility(LinearLayout.VISIBLE);\r\n\r\n            // listener cho button add favorite\r\n            btnAddFav.setOnClickListener(new View.OnClickListener() {\r\n                @Override\r\n                public void onClick(View v) {\r\n                    dbManager.FAVORITE_addPlace(new PlaceObject(place.getName(), place.getAddress(), place.getLatLng()));\r\n                }\r\n            });\r\n\r\n            // thêm vào lịch sử tìm kiếm\r\n            dbManager.HISTORY_addPlace(new PlaceObject(place.getName(), place.getAddress(), place.getLatLng()));\r\n\r\n            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), DEFAULT_MAP_HEIGHT));\r\n            mMap.addMarker(new MarkerOptions().position(place.getLatLng()).title(place.getAddress()));\r\n        }\r\n\r\n        if (resultCode == RESULT_OK && requestCode == RQCODE_FROM_FAVORITE && data != null) {\r\n            int pos = data.getIntExtra(\"position\", 0) + 1;\r\n            PlaceObject place = dbManager.FAVORITE_getPlace(pos);\r\n            mMap.clear();\r\n            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatlong(), DEFAULT_MAP_HEIGHT));\r\n            mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress()));\r\n        }\r\n\r\n        if (resultCode == RESULT_OK && requestCode == RQCODE_FROM_HISTORY && data != null) {\r\n            int pos = data.getIntExtra(\"position\", 0) + 1;\r\n            PlaceObject place = dbManager.HISTORY_getPlace(pos);\r\n            mMap.clear();\r\n            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatlong(), DEFAULT_MAP_HEIGHT));\r\n            mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress()));\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/map_application/MapsActivity.java	(revision f06305b7ed40845fb59102f9451b387bd4bb7ba4)
++++ app/src/main/java/com/example/map_application/MapsActivity.java	(date 1604693566227)
+@@ -15,6 +15,7 @@
+ import android.location.Location;
+ import android.os.Build;
+ import android.os.Bundle;
++import android.util.Log;
+ import android.view.MenuItem;
+ import android.view.View;
+ import android.widget.Button;
+@@ -59,10 +60,12 @@
+ 
+ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, DirectionFinderListener {
+ 
++    // Request code for Intent
+     private final int RQCODE_FOR_PERMISSION = 1;
+     private final int RQCODE_FOR_SEARCH = 2;
+     private final int RQCODE_FROM_FAVORITE = 3;
+     private final int RQCODE_FROM_HISTORY = 4;
++
+     private final int DEFAULT_MAP_HEIGHT = 17;
+ 
+     private boolean locationPermissionGranted;
+@@ -87,17 +90,22 @@
+     private FloatingActionButton btnShare;
+ 
+     // MapType Option
+-    FloatingActionButton btnSelectType, btnSatellite, btnTerrain, btnDefault;
++    private FloatingActionButton btnSelectType, btnSatellite, btnTerrain, btnDefault;
+     boolean selectedMaptype;
+ 
+     // Navigation Bar
+-    public BottomNavigationView navigation;
++    private BottomNavigationView navigation;
++    private String menuSelected;
+ 
+     // Location information
+-    LinearLayout informationLocation;
+-    TextView nameLocation, phoneLocation, ratingLocation, addressLocation, priceLevel;
+-    DBManager dbManager;
+-    Button btnAddFav;
++    private LinearLayout informationLocation;
++    private TextView nameLocation, phoneLocation, ratingLocation, addressLocation, priceLevel;
++    private Button btnAddFav;
++
++    // Data base
++    private DBManager dbManager;
++    // State of Activity
++    private Bundle state;
+ 
+     @RequiresApi(api = Build.VERSION_CODES.Q)
+     @Override
+@@ -113,9 +121,10 @@
+         geocoder = new Geocoder(MapsActivity.this);
+         searchLocation = findViewById(R.id.searchLocation);
+         searchLocation.setFocusable(false);
++
+         // Kiểm tra đã cấp quyền truy cập vào vị trí chưa
+-        if (ContextCompat.checkSelfPermission(MapsActivity.this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+-                == PackageManager.PERMISSION_GRANTED) {
++        if (ContextCompat.checkSelfPermission(MapsActivity.this.getApplicationContext(),
++                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+             locationPermissionGranted = true;
+         } else locationPermissionGranted = false;
+ 
+@@ -141,12 +150,13 @@
+ 
+         // Thêm navigation bar
+         navigation = (BottomNavigationView) findViewById(R.id.bottom_navigation);
+-        navigation.setSelectedItemId(R.id.invisible);
++        navigation.setSelectedItemId(R.id.home);
+         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+         popupMenu = new PopupMenu(MapsActivity.this, navigation);
+         popupMenu.getMenuInflater().inflate(R.menu.places_picker_menu, popupMenu.getMenu());
+         popupMenu.setForceShowIcon(true);
+-        // Thêm Chọn Mape Type
++
++        // Component để hiển thị lựa chọn kiểu bản đồ
+         btnSelectType = findViewById(R.id.floating_button_map_type);
+         btnSatellite = findViewById(R.id.map_satellite);
+         btnTerrain = findViewById(R.id.map_terrain);
+@@ -154,13 +164,13 @@
+         btnCurLocation = findViewById(R.id.btnCurLocation);
+         btnShare = findViewById(R.id.btnShare);
+ 
++        // Component để hiển thị thông tin của địa điểm được tìm thấy
+         informationLocation = findViewById(R.id.infoLayout);
+         nameLocation = findViewById(R.id.namePos);
+         phoneLocation = findViewById(R.id.phonePos);
+         ratingLocation = findViewById(R.id.rating);
+         addressLocation = findViewById(R.id.address);
+         priceLevel = findViewById(R.id.price_level);
+-
+         btnAddFav = informationLocation.findViewById(R.id.btnAddFav);
+ 
+         // ẩn ban đầu cho một số view
+@@ -171,15 +181,50 @@
+         informationLocation.setVisibility(LinearLayout.GONE);
+ 
+         dbManager = new DBManager(this);
++        state = new Bundle();
+         setActionListener();
+     }
+ 
++    @Override
++    protected void onResume() {
++        if (state != null && state.getString("selected") != null) {
++            switch (state.getString("selected"))
++            {
++                case "home":
++                    navigation.setSelectedItemId(R.id.home);
++                    break;
++                case "find":
++                    navigation.setSelectedItemId(R.id.find);
++                    break;
++                case "place":
++                    navigation.setSelectedItemId(R.id.place);
++                    break;
++            }
++            Log.d("State", "OnResume, restore " + state.getString("selected"));
++        } else {
++            Log.d("State", "State is null");
++        }
++        super.onResume();
++    }
++
++    @Override
++    protected void onPause() {
++        state.putString("selected", menuSelected);
++        Log.d("State", "OnPause, save " + menuSelected);
++        super.onPause();
++    }
++
+     // TODO: Sử lý các các tính năng tại đây
+     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
+ 
+         @Override
+         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+             switch (item.getItemId()) {
++                case R.id.home:
++                    searchLocation.setVisibility(View.VISIBLE);
++                    llFindPath.setVisibility(View.GONE);
++                    menuSelected = "home";
++                    return true;
+                 case R.id.find:
+                     //Ẩn thanh search location
+                     searchLocation.setVisibility(View.GONE);
+@@ -198,20 +243,24 @@
+                         }
+                     });
+                     informationLocation.setVisibility(LinearLayout.GONE);
++                    menuSelected = "find";
+                     return true;
+                 case R.id.place:
++                    searchLocation.setVisibility(View.VISIBLE);
++                    llFindPath.setVisibility(View.GONE);
+                     popupMenu.show();
+                     informationLocation.setVisibility(LinearLayout.GONE);
++                    menuSelected = "place";
+                     return true;
+                 case R.id.favorite:
+                     Intent intent_favorite = new Intent(MapsActivity.this, FavoriteActivity.class);
+                     startActivityForResult(intent_favorite, RQCODE_FROM_FAVORITE);
+-                    informationLocation.setVisibility(LinearLayout.GONE);
++                    menuSelected = "favorite";
+                     return true;
+                 case R.id.history:
+                     Intent intent_history = new Intent(MapsActivity.this, HistoryActivity.class);
+                     startActivityForResult(intent_history, RQCODE_FROM_HISTORY);
+-                    informationLocation.setVisibility(LinearLayout.GONE);
++                    menuSelected = "history";
+                     return true;
+             }
+             return false;
+@@ -558,6 +607,7 @@
+         }
+ 
+         if (resultCode == RESULT_OK && requestCode == RQCODE_FROM_FAVORITE && data != null) {
++            navigation.setSelectedItemId(R.id.home);
+             int pos = data.getIntExtra("position", 0) + 1;
+             PlaceObject place = dbManager.FAVORITE_getPlace(pos);
+             mMap.clear();
+@@ -566,6 +616,7 @@
+         }
+ 
+         if (resultCode == RESULT_OK && requestCode == RQCODE_FROM_HISTORY && data != null) {
++            navigation.setSelectedItemId(R.id.home);
+             int pos = data.getIntExtra("position", 0) + 1;
+             PlaceObject place = dbManager.HISTORY_getPlace(pos);
+             mMap.clear();
+Index: app/src/main/res/menu/bottom_navigation_menu.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<menu xmlns:android=\"http://schemas.android.com/apk/res/android\">\r\n    <item\r\n        android:id=\"@+id/find\"\r\n        android:enabled=\"true\"\r\n        android:icon=\"@drawable/ic_baseline_search_24_button\"\r\n        android:title=\"Find\" />\r\n\r\n    <item\r\n        android:id=\"@+id/place\"\r\n        android:enabled=\"true\"\r\n        android:icon=\"@drawable/ic_baseline_place_24\"\r\n        android:title=\"Place\" />\r\n\r\n    <item\r\n        android:id=\"@+id/favorite\"\r\n        android:enabled=\"true\"\r\n        android:icon=\"@drawable/ic_baseline_favorite_24\"\r\n        android:title=\"Favorite\" />\r\n\r\n    <item\r\n        android:id=\"@+id/history\"\r\n        android:enabled=\"true\"\r\n        android:icon=\"@drawable/ic_baseline_history_24\"\r\n        android:title=\"History\" />\r\n\r\n    <item\r\n        android:id=\"@+id/invisible\"\r\n        android:title=\"None\"\r\n        android:enabled=\"true\"\r\n        android:visible=\"false\"/>\r\n</menu>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/menu/bottom_navigation_menu.xml	(revision f06305b7ed40845fb59102f9451b387bd4bb7ba4)
++++ app/src/main/res/menu/bottom_navigation_menu.xml	(date 1604687806694)
+@@ -1,5 +1,11 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <menu xmlns:android="http://schemas.android.com/apk/res/android">
++    <item
++        android:id="@+id/home"
++        android:title="None"
++        android:enabled="true"
++        android:icon="@drawable/ic_baseline_home_work_24"/>
++
+     <item
+         android:id="@+id/find"
+         android:enabled="true"
+@@ -22,11 +28,6 @@
+         android:id="@+id/history"
+         android:enabled="true"
+         android:icon="@drawable/ic_baseline_history_24"
+-        android:title="History" />
+-
+-    <item
+-        android:id="@+id/invisible"
+-        android:title="None"
+-        android:enabled="true"
+-        android:visible="false"/>
++        android:title="History"
++        android:visibility="visible" />
+ </menu>
+\ No newline at end of file
