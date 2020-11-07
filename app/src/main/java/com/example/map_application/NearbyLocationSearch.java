@@ -2,6 +2,7 @@ package com.example.map_application;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
@@ -18,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class NearbyLocationSearch extends AsyncTask<Object, String, String> {
-    private final int RADIUS = 5000;
+    private final int RADIUS = 2000;
 
     private Context context;
     private double lat, lng;
