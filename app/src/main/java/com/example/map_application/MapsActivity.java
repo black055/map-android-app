@@ -275,9 +275,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 == PackageManager.PERMISSION_GRANTED) {
             locationPermissionGranted = true;
             Task<Location> locationTask = getCurrentLocation();
-
             // di chuyển map đến vị trí hiện tại
-            locationTask.addOnCompleteListener(new OnCompleteListener<Location>() {
+            if (locationTask != null) {
+                locationTask.addOnCompleteListener(new OnCompleteListener<Location>() {
                 @Override
                 public void onComplete(@NonNull Task<Location> task) {
                     if (task.isSuccessful()) {
@@ -308,25 +308,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         });
                     }
                 }
-            });
-        } else {
-            // Di chuyển map đến vị trí default nếu không được cấp phép sử dụng định vị
-            mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT), new GoogleMap.CancelableCallback() {
-                @Override
-                public void onFinish() {
-                    navigation.setVisibility(View.VISIBLE);
-                    btnShare.setVisibility(View.VISIBLE);
-                    btnSelectType.setVisibility(View.VISIBLE);
-                    layoutIntro.setVisibility(View.GONE);
-                }
 
-                @Override
-                public void onCancel() {
-
-                }
             });
+                return;
+            }
         }
+        mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT), new GoogleMap.CancelableCallback() {
+            @Override
+            public void onFinish() {
+                navigation.setVisibility(View.VISIBLE);
+                btnShare.setVisibility(View.VISIBLE);
+                btnSelectType.setVisibility(View.VISIBLE);
+                layoutIntro.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onCancel() {
+
+            }
+        });
     }
 
     // Chuyển màn hình đến vị trí hiện tại của thiết bị
