@@ -227,7 +227,7 @@
         android:id="@+id/llFindPath"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/quantum_white_100"
+        android:background="@drawable/background_with_shadow"
         android:orientation="vertical"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"

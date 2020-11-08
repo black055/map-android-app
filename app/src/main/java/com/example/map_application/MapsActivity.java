@@ -83,8 +83,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private EditText edtOrigin, edtDestination;
     private TextView tvDuration, tvDistance;
     private LinearLayout llFindPath;
-    private List<Marker> originMarkers = new ArrayList<>();
-    private List<Marker> destinationMarkers = new ArrayList<>();
     private List<Polyline> polylinePaths = new ArrayList<>();
     private Button btnFindPath, btnFindFromCurrent;
     private PopupMenu popupMenu;
@@ -584,21 +582,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //Find path-----------
     @Override
     public void onDirectionFinderStart() {
-        /*progressDialog = ProgressDialog.show(this, "Please wait.",
-                "Finding direction..!", true);*/
-
-        if (originMarkers != null) {
-            for (Marker marker : originMarkers) {
-                marker.remove();
-            }
-        }
-
-        if (destinationMarkers != null) {
-            for (Marker marker : destinationMarkers) {
-                marker.remove();
-            }
-        }
-
+        //Xóa polyline cũ
         if (polylinePaths != null) {
             for (Polyline polyline:polylinePaths ) {
                 polyline.remove();
@@ -608,37 +592,41 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onDirectionFinderSuccess(List<Route> routes) {
+        //Cấp phát cho polyline (tập hợp các điểm trên đường đi)
         polylinePaths = new ArrayList<>();
-        originMarkers = new ArrayList<>();
-        destinationMarkers = new ArrayList<>();
 
+        // Không tìm được routes từ google cấp
         if (routes.size() == 0) return;
 
         for (Route route : routes) {
-            //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(route.startLocation, 16));
+            //Xóa các marker trên bản đồ
             mMap.clear();
-            //chuyển camera tới vị trí bắt đầu
+            //Chuyển camera tới vị trí bắt đầu
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(route.startLocation, DEFAULT_MAP_HEIGHT));
 
+            //Ghi thời gian, khoảng cách vào 2 ô textview duration, distance
             tvDuration.setText(route.duration.text);
             tvDistance.setText(route.distance.text);
 
-            originMarkers.add(mMap.addMarker(new MarkerOptions()
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.position_start_32))
+            //add marker điểm đầu, điểm cuối lên mMap
+            mMap.addMarker(new MarkerOptions()
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.position_start_24))
                     .title(route.startAddress)
-                    .position(route.startLocation)));
-            destinationMarkers.add(mMap.addMarker(new MarkerOptions()
+                    .position(route.startLocation));
+            mMap.addMarker(new MarkerOptions()
                     .title(route.endAddress)
-                    .position(route.endLocation)));
+                    .position(route.endLocation));
 
+            //Tạo 1 polyline
             PolylineOptions polylineOptions = new PolylineOptions().
                     geodesic(true).
-                    color(R.color.colorRoadRoute).
-                    width(10);
+                    color(ContextCompat.getColor(getApplicationContext(), R.color.colorRoadRoute)).
+                    width(15);
 
+            //Thêm các điểm vào polylineOptions
             for (int i = 0; i < route.points.size(); i++)
                 polylineOptions.add(route.points.get(i));
-
+            //vẽ đường đi giữa 2 điểm
             polylinePaths.add(mMap.addPolyline(polylineOptions));
         }
     }
@@ -656,6 +644,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         try {
+            // Tìm đường dựa vào address điểm đầu, cuối
             new DirectionFinder(this, origin, destination).execute();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
