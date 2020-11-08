@@ -86,7 +86,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private List<Marker> originMarkers = new ArrayList<>();
     private List<Marker> destinationMarkers = new ArrayList<>();
     private List<Polyline> polylinePaths = new ArrayList<>();
-    private Button btnFindPathBack, btnFindPath;
+    private Button btnFindPathBack, btnFindPath, btnFindPathCurPos;
     private PopupMenu popupMenu;
     private boolean isFindingPath;
     //---------
@@ -147,6 +147,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         tvDuration = findViewById(R.id.tvDuration);
         btnFindPathBack = findViewById(R.id.btnFindPathBack);
         btnFindPath = findViewById(R.id.btnFindPath);
+        btnFindPathCurPos = findViewById(R.id.btnFindPathCurPos);
         isFindingPath = false;
 
         // Thêm navigation bar
@@ -155,7 +156,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         popupMenu = new PopupMenu(MapsActivity.this, navigation);
         popupMenu.getMenuInflater().inflate(R.menu.places_picker_menu, popupMenu.getMenu());
-        popupMenu.setForceShowIcon(true);
+        //popupMenu.setForceShowIcon(true);
 
         // Component để hiển thị lựa chọn kiểu bản đồ
         btnSelectType = findViewById(R.id.floating_button_map_type);
@@ -204,7 +205,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             switch (item.getItemId()) {
                 case R.id.home:
                     searchLocation.setVisibility(View.VISIBLE);
-                    llFindPath.setVisibility(View.GONE);
+                    llFindPath.setVisibility(View.INVISIBLE);
+                    btnSelectType.setTranslationY(0);
+                    btnDefault.setTranslationY(0);
+                    btnSatellite.setTranslationY(0);
+                    btnTerrain.setTranslationY(0);
                     menuSelected = "home";
                     return true;
                 case R.id.find:
@@ -214,6 +219,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     //Ẩn thanh search location
                     searchLocation.setVisibility(View.GONE);
                     isFindingPath = true;
+                    //Đưa button select map type xuống
+                    btnSelectType.setTranslationY(llFindPath.getHeight());
+                    btnDefault.setTranslationY(llFindPath.getHeight());
+                    btnSatellite.setTranslationY(llFindPath.getHeight());
+                    btnTerrain.setTranslationY(llFindPath.getHeight());
                     informationLocation.setVisibility(LinearLayout.GONE);
                     menuSelected = "find";
                     return true;
@@ -418,13 +428,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View v) {
                 //llFindPath.animate().translationY(0);
-                llFindPath.setVisibility(View.GONE);
+                llFindPath.setVisibility(View.INVISIBLE);
                 searchLocation.setVisibility(View.VISIBLE);
                 edtOrigin.setText("");
                 edtDestination.setText("");
                 tvDistance.setText(R.string.init_kilometer);
                 tvDuration.setText(R.string.init_second);
                 isFindingPath = false;
+                btnSelectType.setTranslationY(0);
+                btnDefault.setTranslationY(0);
+                btnSatellite.setTranslationY(0);
+                btnTerrain.setTranslationY(0);
+            }
+        });
+
+        //Xử lí button tìm địa điểm từ vị trí hiện tại
+        btnFindPathCurPos.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getCurrentLocation();
+                if (lastLocation != null) {
+                    String origin = String.valueOf(lastLocation.getLatitude()) + ", " + String.valueOf(lastLocation.getLongitude());
+                    edtOrigin.setText(origin);
+                }
+                else {
+                    Toast.makeText(MapsActivity.this, "Can not get current position!", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -533,17 +562,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             tvDistance.setText(route.distance.text);
 
             originMarkers.add(mMap.addMarker(new MarkerOptions()
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.blue_start_32))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.position_start_32))
                     .title(route.startAddress)
                     .position(route.startLocation)));
             destinationMarkers.add(mMap.addMarker(new MarkerOptions()
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.red_end_32))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.position_end_32))
                     .title(route.endAddress)
                     .position(route.endLocation)));
 
             PolylineOptions polylineOptions = new PolylineOptions().
                     geodesic(true).
-                    color(R.color.quantum_lightblue).
+                    color(R.color.colorRoadRoute).
                     width(10);
 
             for (int i = 0; i < route.points.size(); i++)

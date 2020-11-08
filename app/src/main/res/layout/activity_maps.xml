@@ -210,23 +210,40 @@
         android:id="@+id/llFindPath"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/quantum_white_100"
+        android:background="@drawable/background_with_shadow"
         android:orientation="vertical"
+        android:visibility="invisible"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/map"
-        android:visibility="gone">
+        app:layout_constraintTop_toTopOf="@+id/map">
 
-        <Button
-            android:id="@+id/btnFindPathBack"
-            android:layout_width="42dp"
-            android:layout_height="36dp"
-            android:layout_marginLeft="12dp"
-            android:background="@drawable/ic_baseline_arrow_back_ios_24"
-            android:paddingStart="10dp"
-            android:paddingLeft="10dp"
-            android:paddingEnd="30dp"
-            android:paddingRight="30dp"
-            android:textColor="@android:color/black" />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnFindPathBack"
+                android:layout_width="42dp"
+                android:layout_height="36dp"
+                android:layout_marginLeft="12dp"
+                android:background="@drawable/ic_baseline_arrow_back_ios_24"
+                android:paddingStart="10dp"
+                android:paddingLeft="10dp"
+                android:paddingEnd="30dp"
+                android:paddingRight="30dp"
+                android:layout_marginTop="10dp"
+                android:layout_alignParentLeft="true"
+                android:textColor="@android:color/black" />
+
+            <Button
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="12dp"
+                android:layout_alignParentRight="true"
+                android:background="@drawable/ic_baseline_gps_fixed_24"
+                android:id="@+id/btnFindPathCurPos"/>
+        </RelativeLayout>
 
         <EditText
             android:id="@+id/edtOrigin"
@@ -237,7 +254,8 @@
             android:layout_marginRight="12dp"
             android:ems="10"
             android:hint="@string/enter_origin_address"
-            android:inputType="textPersonName" />
+            android:inputType="textPersonName"
+            android:backgroundTint="@color/coloredtTint"/>
 
         <EditText
             android:id="@+id/edtDestination"
@@ -248,7 +266,8 @@
             android:layout_marginRight="12dp"
             android:ems="10"
             android:hint="@string/enter_destination_address"
-            android:inputType="textPersonName" />
+            android:inputType="textPersonName"
+            android:backgroundTint="@color/coloredtTint"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -289,6 +308,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#FFFFFF"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
