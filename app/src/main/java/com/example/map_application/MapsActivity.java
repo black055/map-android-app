@@ -8,20 +8,16 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -36,6 +32,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -88,7 +86,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private List<Marker> originMarkers = new ArrayList<>();
     private List<Marker> destinationMarkers = new ArrayList<>();
     private List<Polyline> polylinePaths = new ArrayList<>();
-    private Button btnFindPathBack, btnFindPath, btnFindPathCurPos;
+    private Button btnFindPath, btnFindFromCurrent;
     private PopupMenu popupMenu;
     private boolean isFindingPath;
     //---------
@@ -147,9 +145,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         edtDestination = findViewById(R.id.edtDestination); edtDestination.setFocusable(false);
         tvDistance = findViewById(R.id.tvDistance);
         tvDuration = findViewById(R.id.tvDuration);
-        btnFindPathBack = findViewById(R.id.btnFindPathBack);
         btnFindPath = findViewById(R.id.btnFindPath);
-        btnFindPathCurPos = findViewById(R.id.btnFindPathCurPos);
+        btnFindFromCurrent = findViewById(R.id.btnFindFromCurrent);
         isFindingPath = false;
 
         // Thêm navigation bar
@@ -207,6 +204,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             switch (item.getItemId()) {
                 case R.id.home:
                     searchLocation.setVisibility(View.VISIBLE);
+                    llFindPath.setVisibility(View.GONE);
+                    edtOrigin.setText("");
+                    edtDestination.setText("");
+                    tvDistance.setText(R.string.init_kilometer);
+                    tvDuration.setText(R.string.init_second);
+                    isFindingPath = false;
                     llFindPath.setVisibility(View.INVISIBLE);
                     btnSelectType.setTranslationY(0);
                     btnDefault.setTranslationY(0);
@@ -229,7 +232,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     return true;
                 case R.id.place:
                     searchLocation.setVisibility(View.VISIBLE);
-                    llFindPath.setVisibility(View.INVISIBLE);
+                    llFindPath.setVisibility(View.GONE);
+                    edtOrigin.setText("");
+                    edtDestination.setText("");
+                    tvDistance.setText(R.string.init_kilometer);
+                    tvDuration.setText(R.string.init_second);
+                    isFindingPath = false;
                     Task<Location> locationTask = getCurrentLocation();
                     locationTask.addOnCompleteListener(new OnCompleteListener<Location>() {
                         @Override
@@ -243,10 +251,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     informationLocation.setVisibility(LinearLayout.GONE);
                     return true;
                 case R.id.favorite:
+                    isFindingPath = false;
                     Intent intent_favorite = new Intent(MapsActivity.this, FavoriteActivity.class);
                     startActivityForResult(intent_favorite, RQCODE_FROM_FAVORITE);
                     return true;
                 case R.id.history:
+                    isFindingPath = false;
                     Intent intent_history = new Intent(MapsActivity.this, HistoryActivity.class);
                     startActivityForResult(intent_history, RQCODE_FROM_HISTORY);
                     return true;
@@ -259,23 +269,64 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
 
-        // Hiện layout loading đến khi movecamera kết thúc
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT), new GoogleMap.CancelableCallback() {
-            @Override
-            public void onFinish() {
-                navigation.setVisibility(View.VISIBLE);
-                btnShare.setVisibility(View.VISIBLE);
-                btnSelectType.setVisibility(View.VISIBLE);
-                layoutIntro.setVisibility(View.GONE);
-            }
+        ActivityCompat.requestPermissions(MapsActivity.this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, RQCODE_FOR_PERMISSION);
+        if (ContextCompat.checkSelfPermission(MapsActivity.this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            locationPermissionGranted = true;
+            Task<Location> locationTask = getCurrentLocation();
 
-            @Override
-            public void onCancel() {
+            // di chuyển map đến vị trí hiện tại
+            locationTask.addOnCompleteListener(new OnCompleteListener<Location>() {
+                @Override
+                public void onComplete(@NonNull Task<Location> task) {
+                    if (task.isSuccessful()) {
+                        lastLocation = task.getResult();
+                        LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
 
-            }
-        });
+                        mMap.addMarker(new MarkerOptions().position(current)
+                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location)));
+
+                        Circle circle = mMap.addCircle(new CircleOptions()
+                                .center(current).radius(80)
+                                .strokeWidth(0)
+                                .strokeColor(Color.parseColor("#225595EC"))
+                                .fillColor(Color.parseColor("#225595EC")));
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current, DEFAULT_MAP_HEIGHT), new GoogleMap.CancelableCallback() {
+                            @Override
+                            public void onFinish() {
+                                navigation.setVisibility(View.VISIBLE);
+                                btnShare.setVisibility(View.VISIBLE);
+                                btnSelectType.setVisibility(View.VISIBLE);
+                                layoutIntro.setVisibility(View.GONE);
+                            }
+
+                            @Override
+                            public void onCancel() {
+
+                            }
+                        });
+                    }
+                }
+            });
+        } else {
+            // Di chuyển map đến vị trí default nếu không được cấp phép sử dụng định vị
+            mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT), new GoogleMap.CancelableCallback() {
+                @Override
+                public void onFinish() {
+                    navigation.setVisibility(View.VISIBLE);
+                    btnShare.setVisibility(View.VISIBLE);
+                    btnSelectType.setVisibility(View.VISIBLE);
+                    layoutIntro.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onCancel() {
+
+                }
+            });
+        }
     }
 
     // Chuyển màn hình đến vị trí hiện tại của thiết bị
@@ -295,6 +346,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void moveMapToCurrentLocation() {
         LatLng location = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+        Circle circle = mMap.addCircle(new CircleOptions()
+                .center(location).radius(80)
+                .strokeWidth(0)
+                .strokeColor(Color.parseColor("#225595EC"))
+                .fillColor(Color.parseColor("#225595EC")));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, DEFAULT_MAP_HEIGHT));
         Address address = null;
         try {
@@ -439,37 +495,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
-        //Xử lí nút Back quay về giao diện chính
-        btnFindPathBack.setOnClickListener(new View.OnClickListener() {
+        btnFindFromCurrent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //llFindPath.animate().translationY(0);
-                llFindPath.setVisibility(View.INVISIBLE);
-                searchLocation.setVisibility(View.VISIBLE);
-                edtOrigin.setText("");
-                edtDestination.setText("");
-                tvDistance.setText(R.string.init_kilometer);
-                tvDuration.setText(R.string.init_second);
-                isFindingPath = false;
-                btnSelectType.setTranslationY(0);
-                btnDefault.setTranslationY(0);
-                btnSatellite.setTranslationY(0);
-                btnTerrain.setTranslationY(0);
-            }
-        });
+                Task<Location> locationTask = getCurrentLocation();
 
-        //Xử lí button tìm địa điểm từ vị trí hiện tại
-        btnFindPathCurPos.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getCurrentLocation();
-                if (lastLocation != null) {
-                    String origin = String.valueOf(lastLocation.getLatitude()) + ", " + String.valueOf(lastLocation.getLongitude());
-                    edtOrigin.setText(origin);
-                }
-                else {
-                    Toast.makeText(MapsActivity.this, "Can not get current position!", Toast.LENGTH_SHORT).show();
-                }
+                locationTask.addOnCompleteListener(new OnCompleteListener<Location>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Location> task) {
+                        if (task.isSuccessful()) {
+                            lastLocation = task.getResult();
+                            String origin = "" + lastLocation.getLatitude() +"," + lastLocation.getLongitude();
+                            String destination = searchLocation.getText().toString();
+                            try {
+                                new DirectionFinder(MapsActivity.this, origin, destination).execute();
+                                informationLocation.setVisibility(View.GONE);
+                            } catch (UnsupportedEncodingException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                });
             }
         });
 

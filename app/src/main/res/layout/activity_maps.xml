@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:tools="http://schemas.android.com/tools"
-    android:layout_height="match_parent"
-    android:layout_width="match_parent"
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:map="http://schemas.android.com/apk/res-auto">
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <fragment
         android:id="@+id/map"
@@ -24,9 +24,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="top|right"
         android:layout_margin="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginRight="32dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
         android:visibility="visible"
         app:backgroundTint="#FFFFFF"
         app:layout_constraintEnd_toEndOf="parent"
@@ -182,18 +182,34 @@
             android:text="Rating"
             android:textSize="14sp" />
 
-        <Button
-            android:id="@+id/btnAddFav"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/add_fav_background"
-            android:paddingLeft="15dp"
-            android:paddingRight="15dp"
-            android:text="Add favorite"
-            android:textColor="#FFFFFF"
-            android:textSize="10sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/searchLocation" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+            <Button
+                android:id="@+id/btnAddFav"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/add_fav_background"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:text="Thêm vào danh sách"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/searchLocation" />
+            <Button
+                android:id="@+id/btnFindFromCurrent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/add_fav_background"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:text="Hiển thị đường đi"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/searchLocation" />
+        </LinearLayout>
     </LinearLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
@@ -203,7 +219,7 @@
         android:background="#FFFFFF"
         app:layout_constraintTop_toBottomOf="@+id/map"
         app:menu="@menu/bottom_navigation_menu"
-        tools:layout_editor_absoluteX="0dp" >
+        tools:layout_editor_absoluteX="0dp">
 
     </com.google.android.material.bottomnavigation.BottomNavigationView>
 
@@ -211,52 +227,24 @@
         android:id="@+id/llFindPath"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/background_with_shadow"
+        android:background="@color/quantum_white_100"
         android:orientation="vertical"
-        android:visibility="invisible"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/map">
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btnFindPathBack"
-                android:layout_width="42dp"
-                android:layout_height="36dp"
-                android:layout_marginLeft="12dp"
-                android:background="@drawable/ic_baseline_arrow_back_ios_24"
-                android:paddingStart="10dp"
-                android:paddingLeft="10dp"
-                android:paddingEnd="30dp"
-                android:paddingRight="30dp"
-                android:layout_marginTop="10dp"
-                android:layout_alignParentLeft="true"
-                android:textColor="@android:color/black" />
-
-            <Button
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginRight="12dp"
-                android:layout_alignParentRight="true"
-                android:background="@drawable/ic_baseline_gps_fixed_24"
-                android:id="@+id/btnFindPathCurPos"/>
-        </RelativeLayout>
 
         <EditText
             android:id="@+id/edtOrigin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="12dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="15dp"
             android:layout_marginRight="12dp"
+            android:background="@drawable/search_bar_background"
             android:ems="10"
             android:hint="@string/enter_origin_address"
             android:inputType="textPersonName"
-            android:backgroundTint="@color/coloredtTint"/>
+            android:padding="10dp" />
 
         <EditText
             android:id="@+id/edtDestination"
@@ -265,10 +253,12 @@
             android:layout_marginLeft="12dp"
             android:layout_marginTop="10dp"
             android:layout_marginRight="12dp"
+            android:layout_marginBottom="10dp"
+            android:background="@drawable/search_bar_background"
             android:ems="10"
             android:hint="@string/enter_destination_address"
             android:inputType="textPersonName"
-            android:backgroundTint="@color/coloredtTint"/>
+            android:padding="10dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -277,10 +267,13 @@
 
             <Button
                 android:id="@+id/btnFindPath"
-                android:layout_width="50dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="12dp"
-                android:background="@drawable/ic_baseline_search_24" />
+                android:layout_marginBottom="10dp"
+                android:background="@drawable/add_fav_background"
+                android:text="Tìm"
+                android:textColor="#FFFFFF" />
 
             <TextView
                 android:id="@+id/tvDuration"
@@ -289,7 +282,7 @@
                 android:layout_marginLeft="40dp"
                 android:layout_weight="1"
                 android:drawableLeft="@drawable/ic_baseline_timer_24"
-                android:gravity="center"
+                android:gravity="center_vertical"
                 android:text="@string/init_second" />
 
             <TextView
@@ -299,7 +292,7 @@
                 android:layout_marginLeft="12dp"
                 android:layout_weight="1"
                 android:drawableLeft="@drawable/ic_car"
-                android:gravity="center"
+                android:gravity="center_vertical"
                 android:text="@string/init_kilometer" />
         </LinearLayout>
     </LinearLayout>
@@ -331,15 +324,15 @@
                 map:layout_constraintEnd_toEndOf="parent" />
 
             <com.airbnb.lottie.LottieAnimationView
-                android:layout_width="137dp"
-                android:layout_height="69dp"
+                android:layout_width="179dp"
+                android:layout_height="81dp"
                 android:layout_marginBottom="128dp"
+                app:layout_constraintHorizontal_bias="0.498"
+                app:layout_constraintVertical_bias="0.038"
                 map:layout_constraintBottom_toBottomOf="parent"
                 map:layout_constraintEnd_toEndOf="parent"
-                map:layout_constraintHorizontal_bias="0.474"
                 map:layout_constraintStart_toStartOf="parent"
                 map:layout_constraintTop_toBottomOf="@+id/imageView3"
-                map:layout_constraintVertical_bias="0.0"
                 map:lottie_autoPlay="true"
                 map:lottie_loop="true"
                 map:lottie_rawRes="@raw/loading" />
