@@ -50,6 +50,8 @@ import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -156,7 +158,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         popupMenu = new PopupMenu(MapsActivity.this, navigation);
         popupMenu.getMenuInflater().inflate(R.menu.places_picker_menu, popupMenu.getMenu());
-        //popupMenu.setForceShowIcon(true);
+        popupMenu.setForceShowIcon(true);
 
         // Component để hiển thị lựa chọn kiểu bản đồ
         btnSelectType = findViewById(R.id.floating_button_map_type);
@@ -210,7 +212,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     btnDefault.setTranslationY(0);
                     btnSatellite.setTranslationY(0);
                     btnTerrain.setTranslationY(0);
-                    menuSelected = "home";
                     return true;
                 case R.id.find:
                     //llFindPath.animate().translationY(llFindPath.getHeight());
@@ -225,24 +226,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     btnSatellite.setTranslationY(llFindPath.getHeight());
                     btnTerrain.setTranslationY(llFindPath.getHeight());
                     informationLocation.setVisibility(LinearLayout.GONE);
-                    menuSelected = "find";
                     return true;
                 case R.id.place:
                     searchLocation.setVisibility(View.VISIBLE);
-                    llFindPath.setVisibility(View.GONE);
+                    llFindPath.setVisibility(View.INVISIBLE);
+                    Task<Location> locationTask = getCurrentLocation();
+                    locationTask.addOnCompleteListener(new OnCompleteListener<Location>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Location> task) {
+                            if (task.isSuccessful()) {
+                                lastLocation = task.getResult();
+                            }
+                        }
+                    });
                     popupMenu.show();
                     informationLocation.setVisibility(LinearLayout.GONE);
-                    menuSelected = "place";
                     return true;
                 case R.id.favorite:
                     Intent intent_favorite = new Intent(MapsActivity.this, FavoriteActivity.class);
                     startActivityForResult(intent_favorite, RQCODE_FROM_FAVORITE);
-                    menuSelected = "favorite";
                     return true;
                 case R.id.history:
                     Intent intent_history = new Intent(MapsActivity.this, HistoryActivity.class);
                     startActivityForResult(intent_history, RQCODE_FROM_HISTORY);
-                    menuSelected = "history";
                     return true;
             }
             return false;
@@ -253,8 +259,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        //mMap.setPadding(0, 1600, 0, 140);
         mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
+
+        // Hiện layout loading đến khi movecamera kết thúc
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT), new GoogleMap.CancelableCallback() {
             @Override
             public void onFinish() {
@@ -272,22 +279,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     // Chuyển màn hình đến vị trí hiện tại của thiết bị
-    private void getCurrentLocation() {
+    @org.jetbrains.annotations.Nullable
+    private Task<Location> getCurrentLocation() {
         if (locationPermissionGranted) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return;
+                return null;
             }
             Task<Location> locationResult = LocationServices.getFusedLocationProviderClient(MapsActivity.this).getLastLocation();
-
-            locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
-                @Override
-                public void onComplete(@NonNull Task<Location> task) {
-                    if (task.isSuccessful()) {
-                        lastLocation = task.getResult();
-                    }
-                }
-            });
-        } else getLocationPermission();
+            return locationResult;
+        } else {
+            getLocationPermission();
+            return null;
+        }
     }
 
     private void moveMapToCurrentLocation() {
@@ -301,7 +304,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         // Nếu lấy được địa chỉ chi tiết thì hiển thị trên marker, không thì hiển thị "Your current location"
         if (address != null && address.getAddressLine(0) != null)
-            mMap.addMarker(new MarkerOptions().position(location).title(address.getAddressLine(0)));
+            mMap.addMarker(new MarkerOptions().position(location).title(address
+                    .getAddressLine(0)).icon(BitmapDescriptorFactory
+                    .fromResource(R.drawable.current_location)));
         else
             mMap.addMarker(new MarkerOptions().position(location).title("Your current location"));
     }
@@ -314,13 +319,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (informationLocation.getVisibility() == LinearLayout.VISIBLE) {
                     informationLocation.setVisibility(LinearLayout.GONE);
                 }
-                getCurrentLocation();
-                // Nếu lấy được vị trí hiện tại thì chuyển camera đến vị trí hiện tại, nếu không thì chuyển đến vị trí mặc định
-                if (lastLocation != null) {
-                    moveMapToCurrentLocation();
-                } else {
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));
-                }
+                Task<Location> locationTask = getCurrentLocation();
+
+                locationTask.addOnCompleteListener(new OnCompleteListener<Location>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Location> task) {
+                        if (task.isSuccessful()) {
+                            lastLocation = task.getResult();
+                            moveMapToCurrentLocation();
+                        }
+                    }
+                });
             }
         });
 
@@ -404,14 +413,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnShare.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getCurrentLocation();
-                if (lastLocation != null) {
-                    Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
-                    sharingIntent.setType("text/plain");
-                    sharingIntent.putExtra(Intent.EXTRA_TEXT, "https://maps.google.com?q="
-                    + lastLocation.getLatitude() + "," + lastLocation.getLongitude());
-                    startActivity(Intent.createChooser(sharingIntent, "Share via"));
-                }
+                Task<Location> locationTask = getCurrentLocation();
+
+                locationTask.addOnCompleteListener(new OnCompleteListener<Location>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Location> task) {
+                        if (task.isSuccessful()) {
+                            lastLocation = task.getResult();
+                            Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                            sharingIntent.setType("text/plain");
+                            sharingIntent.putExtra(Intent.EXTRA_TEXT, "https://maps.google.com?q="
+                                    + lastLocation.getLatitude() + "," + lastLocation.getLongitude());
+                            startActivity(Intent.createChooser(sharingIntent, "Share via"));
+                        }
+                    }
+                });
             }
         });
 
@@ -460,7 +476,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                getCurrentLocation();
+                //getCurrentLocation();
                 if (locationPermissionGranted && lastLocation != null) {
                     mMap.clear();
                     moveMapToCurrentLocation();
@@ -566,7 +582,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .title(route.startAddress)
                     .position(route.startLocation)));
             destinationMarkers.add(mMap.addMarker(new MarkerOptions()
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.position_end_32))
                     .title(route.endAddress)
                     .position(route.endLocation)));
 
@@ -602,37 +617,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
     //-----------------------------------------------------------
 
+    private void showPlaceInformation(@NotNull Place place) {
+        searchLocation.setText(place.getAddress());
+        nameLocation.setText(place.getName());
+        addressLocation.setText(place.getAddress());
+        // check phone number
+        if (place.getPhoneNumber() != null) {
+            phoneLocation.setText("Phone number: " + place.getPhoneNumber());
+        }
+        else
+            phoneLocation.setVisibility(View.GONE);
+
+        // check rating
+        if (place.getRating() != null) {
+            ratingLocation.setText("Rating : " + place.getRating());
+        }
+        else
+            ratingLocation.setVisibility(View.GONE);
+
+
+        // check price level
+        if (place.getPriceLevel() != null) {
+            priceLevel.setText("Price level: " + place.getPriceLevel());
+        }
+        else
+            priceLevel.setVisibility(View.GONE);
+
+        informationLocation.setVisibility(LinearLayout.VISIBLE);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == RQCODE_FOR_SEARCH && resultCode == RESULT_OK) {
             final Place place = Autocomplete.getPlaceFromIntent(data);
-            searchLocation.setText(place.getAddress());
-            nameLocation.setText(place.getName());
-            addressLocation.setText(place.getAddress());
-            // check phone number
-            if (place.getPhoneNumber() != null) {
-                phoneLocation.setText("Phone number: " + place.getPhoneNumber());
-            }
-            else
-                phoneLocation.setVisibility(View.GONE);
 
-            // check rating
-            if (place.getRating() != null) {
-                ratingLocation.setText("Rating : " + place.getRating());
-            }
-            else
-                ratingLocation.setVisibility(View.GONE);
-
-
-            // check price level
-            if (place.getPriceLevel() != null) {
-                priceLevel.setText("Price level: " + place.getPriceLevel());
-            }
-            else
-                priceLevel.setVisibility(View.GONE);
-
-            informationLocation.setVisibility(LinearLayout.VISIBLE);
+            showPlaceInformation(place);
 
             // listener cho button add favorite
             btnAddFav.setOnClickListener(new View.OnClickListener() {
