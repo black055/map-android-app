@@ -49,30 +49,44 @@ import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.gson.Gson;
 import com.karumi.dexter.Dexter;
-import com.karumi.dexter.DexterBuilder;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
 import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import modules.DirectionFinder;
 import modules.DirectionFinderListener;
+import modules.GetPlaceFromText;
+import modules.GetPlaceInterface;
 import modules.PlaceObject;
 import modules.Route;
 import modules.DBManager;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, DirectionFinderListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
+        , DirectionFinderListener, GetPlaceInterface {
 
     // Request code for Intent
     private final int RQCODE_FOR_PERMISSION = 1;
@@ -81,6 +95,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private final int RQCODE_FROM_HISTORY = 4;
     private final int RQCODE_FOR_FINDORI = 5;
     private final int RQCODE_FOR_FINDDES = 6;
+    private final int RQCODE_FOR_SEARCH_VIA_VOICE = 7;
+    private final int RQCODE_FOR_SEARCH_VOICE = 8;
     private final int DEFAULT_MAP_HEIGHT = 17;
 
     private boolean locationPermissionGranted;
@@ -117,12 +133,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LinearLayout informationLocation;
     private TextView nameLocation, phoneLocation, ratingLocation, addressLocation, priceLevel;
     private Button btnAddFav;
+    private boolean isGoBack;
 
     // Data base
     private DBManager dbManager;
 
     // Intro
     private LinearLayout layoutIntro;
+
+    // Search via voice
+    private ImageView searchByVoice;
+    String[] resultByVoiceSearch;
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
@@ -137,6 +158,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         geocoder = new Geocoder(MapsActivity.this);
         searchLocation = findViewById(R.id.searchLocation);
+        searchByVoice = findViewById(R.id.searchVoice);
         searchLocation.setFocusable(false);
 
         // Kiểm tra đã cấp quyền truy cập vào vị trí chưa
@@ -198,6 +220,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         navigation.setVisibility(View.GONE);
         btnShare.setVisibility(View.GONE);
         btnSelectType.setVisibility(View.GONE);
+        searchByVoice.setVisibility(View.GONE);
+        isGoBack = false;
         setActionListener();
     }
 
@@ -215,6 +239,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             switch (item.getItemId()) {
                 case R.id.home:
                     searchLocation.setVisibility(View.VISIBLE);
+                    //searchByVoice.setVisibility(View.VISIBLE);
+                    if (isGoBack) {
+                        informationLocation.setVisibility(View.VISIBLE);
+                        isGoBack = false;
+                    }
                     llFindPath.setVisibility(View.GONE);
                     edtOrigin.setText("");
                     edtDestination.setText("");
@@ -233,6 +262,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     llFindPath.setVisibility(View.VISIBLE);
                     //Ẩn thanh search location
                     searchLocation.setVisibility(View.GONE);
+                    searchByVoice.setVisibility(View.GONE);
                     isFindingPath = true;
                     //Đưa button select map type xuống
                     btnSelectType.setTranslationY(llFindPath.getHeight());
@@ -244,6 +274,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     return true;
                 case R.id.place:
                     searchLocation.setVisibility(View.VISIBLE);
+                    searchByVoice.setVisibility(View.VISIBLE);
                     llFindPath.setVisibility(View.GONE);
                     edtOrigin.setText("");
                     edtDestination.setText("");
@@ -271,10 +302,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     };
 
-
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        searchByVoice.setVisibility(View.GONE);
         getCurrentLocation();
     }
 
@@ -295,6 +326,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                         @Override
                         public void onPermissionDenied(PermissionDeniedResponse response) {
+                            searchByVoice.setVisibility(View.GONE);
                             mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
                             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT), new GoogleMap.CancelableCallback() {
                                 @Override
@@ -303,6 +335,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     btnShare.setVisibility(View.VISIBLE);
                                     btnSelectType.setVisibility(View.VISIBLE);
                                     layoutIntro.setVisibility(View.GONE);
+                                    searchByVoice.setVisibility(View.VISIBLE);
+                                    searchByVoice.setVisibility(View.VISIBLE);
                                 }
 
                                 @Override
@@ -326,6 +360,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     btnShare.setVisibility(View.VISIBLE);
                     btnSelectType.setVisibility(View.VISIBLE);
                     layoutIntro.setVisibility(View.GONE);
+                    searchByVoice.setVisibility(View.VISIBLE);
+                    searchByVoice.setVisibility(View.VISIBLE);
                 }
 
                 @Override
@@ -347,7 +383,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
             @Override
             public void onComplete(@NonNull Task<Location> task) {
-                if (task.isSuccessful()) {
+                if (task.isSuccessful() && task.getResult() != null) {
                     lastLocation = task.getResult();
                     LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
                     mMap.clear();
@@ -366,6 +402,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             btnShare.setVisibility(View.VISIBLE);
                             btnSelectType.setVisibility(View.VISIBLE);
                             layoutIntro.setVisibility(View.GONE);
+                            searchByVoice.setVisibility(View.VISIBLE);
                         }
 
                         @Override
@@ -410,12 +447,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     btnSatellite.hide();
                     btnTerrain.hide();
                     selectedMaptype = false;
-                }
-
-                else if (!selectedMaptype) {
+                } else if (!selectedMaptype) {
                     btnTerrain.show();
                     btnSatellite.show();
-                    btnDefault.show();;
+                    btnDefault.show();
+                    ;
                     selectedMaptype = true;
                 }
             }
@@ -471,7 +507,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnShare.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Dexter.withActivity((Activity)v.getContext()).withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                Dexter.withActivity((Activity) v.getContext()).withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                         .withListener(new PermissionListener() {
                             @Override
                             public void onPermissionGranted(PermissionGrantedResponse response) {
@@ -484,7 +520,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
                                     @Override
                                     public void onComplete(@NonNull Task<Location> task) {
-                                        if (task.isSuccessful()) {
+                                        if (task.isSuccessful() && task.getResult() != null) {
                                             lastLocation = task.getResult();
                                             Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
                                             sharingIntent.setType("text/plain");
@@ -521,7 +557,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnFindFromCurrent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Dexter.withActivity((Activity)v.getContext()).withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                Dexter.withActivity((Activity) v.getContext()).withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                         .withListener(new PermissionListener() {
                             @Override
                             public void onPermissionGranted(PermissionGrantedResponse response) {
@@ -534,9 +570,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
                                     @Override
                                     public void onComplete(@NonNull Task<Location> task) {
-                                        if (task.isSuccessful()) {
+                                        if (task.isSuccessful() && task.getResult() != null) {
                                             lastLocation = task.getResult();
-                                            String origin = "" + lastLocation.getLatitude() +"," + lastLocation.getLongitude();
+                                            String origin = "" + lastLocation.getLatitude() + "," + lastLocation.getLongitude();
                                             String destination = searchLocation.getText().toString();
                                             try {
                                                 new DirectionFinder(MapsActivity.this, origin, destination).execute();
@@ -568,7 +604,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public boolean onMenuItemClick(MenuItem item) {
                 //getCurrentLocation();
                 if (locationPermissionGranted && lastLocation != null) {
-                    String type="";
+                    String type = "";
                     LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
                     mMap.clear();
                     mMap.addMarker(new MarkerOptions().position(current)
@@ -581,22 +617,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             .fillColor(Color.parseColor("#225595EC")));
                     switch (item.getItemId()) {
                         case R.id.menuATM:
-                            type="atm";
+                            type = "atm";
                             break;
                         case R.id.menuCafe:
-                            type="cafe";
+                            type = "cafe";
                             break;
                         case R.id.menuGasStation:
-                            type="gas_station";
+                            type = "gas_station";
                             break;
                         case R.id.menuGym:
-                            type="gym";
+                            type = "gym";
                             break;
                         case R.id.menuRestaurant:
-                            type="restaurant";
+                            type = "restaurant";
                             break;
                         case R.id.menuSchool:
-                            type="school";
+                            type = "school";
                             break;
                     }
                     NearbyLocationSearch searcher = new NearbyLocationSearch(getApplicationContext(),
@@ -607,17 +643,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 return false;
             }
         });
-    }
 
-    // Kiểm tra và xin cấp quyền sử dụng vị trí
-    private void getLocationPermission() {
-        if (ContextCompat.checkSelfPermission(MapsActivity.this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            locationPermissionGranted = true;
-        }
-        else {
-            ActivityCompat.requestPermissions(MapsActivity.this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, RQCODE_FOR_PERMISSION);
-        }
+        searchByVoice.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent("android.speech.action.RECOGNIZE_SPEECH");
+                intent.putExtra("android.speech.extra.LANGUAGE_MODEL", "free_form");
+                intent.putExtra("android.speech.extra.PROMPT", "Speak Now");
+                startActivityForResult(intent, RQCODE_FOR_SEARCH_VIA_VOICE);
+            }
+        });
     }
 
     @Override
@@ -652,7 +687,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         if (polylinePaths != null) {
-            for (Polyline polyline:polylinePaths ) {
+            for (Polyline polyline : polylinePaths) {
                 polyline.remove();
             }
         }
@@ -722,23 +757,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // check phone number
         if (place.getPhoneNumber() != null) {
             phoneLocation.setText("Phone number: " + place.getPhoneNumber());
-        }
-        else
+        } else
             phoneLocation.setVisibility(View.GONE);
 
         // check rating
         if (place.getRating() != null) {
             ratingLocation.setText("Rating : " + place.getRating());
-        }
-        else
+        } else
             ratingLocation.setVisibility(View.GONE);
 
 
         // check price level
         if (place.getPriceLevel() != null) {
             priceLevel.setText("Price level: " + place.getPriceLevel());
-        }
-        else
+        } else
             priceLevel.setVisibility(View.GONE);
 
         informationLocation.setVisibility(LinearLayout.VISIBLE);
@@ -757,6 +789,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 @Override
                 public void onClick(View v) {
                     dbManager.FAVORITE_addPlace(new PlaceObject(place.getName(), place.getAddress(), place.getLatLng()));
+                    Toast.makeText(MapsActivity.this, "Địa điểm đã được thêm vào danh sách", Toast.LENGTH_SHORT).show();
                 }
             });
 
@@ -770,19 +803,57 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (resultCode == RESULT_OK && requestCode == RQCODE_FROM_FAVORITE && data != null) {
             navigation.setSelectedItemId(R.id.home);
             int pos = data.getIntExtra("position", 0) + 1;
-            PlaceObject place = dbManager.FAVORITE_getPlace(pos);
+            final PlaceObject place = dbManager.FAVORITE_getPlace(pos);
+            btnAddFav.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dbManager.FAVORITE_addPlace(place);
+                    Toast.makeText(MapsActivity.this, "Địa điểm đã được thêm vào danh sách", Toast.LENGTH_SHORT).show();
+                }
+            });
             mMap.clear();
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatlong(), DEFAULT_MAP_HEIGHT));
             mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress()));
+            nameLocation.setText(place.getName());
+            addressLocation.setText(place.getAddress());
+            // check phone number
+            phoneLocation.setVisibility(View.GONE);
+
+            // check rating
+            ratingLocation.setVisibility(View.GONE);
+
+            // check price level
+            priceLevel.setVisibility(View.GONE);
+            informationLocation.setVisibility(LinearLayout.VISIBLE);
+            isGoBack = true;
         }
 
         if (resultCode == RESULT_OK && requestCode == RQCODE_FROM_HISTORY && data != null) {
             navigation.setSelectedItemId(R.id.home);
             int pos = data.getIntExtra("position", 0) + 1;
-            PlaceObject place = dbManager.HISTORY_getPlace(pos);
+            final PlaceObject place = dbManager.HISTORY_getPlace(pos);
+            btnAddFav.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dbManager.FAVORITE_addPlace(place);
+                    Toast.makeText(MapsActivity.this, "Địa điểm đã được thêm vào danh sách", Toast.LENGTH_SHORT).show();
+                }
+            });
             mMap.clear();
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatlong(), DEFAULT_MAP_HEIGHT));
             mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress()));
+            nameLocation.setText(place.getName());
+            addressLocation.setText(place.getAddress());
+            // check phone number
+            phoneLocation.setVisibility(View.GONE);
+
+            // check rating
+            ratingLocation.setVisibility(View.GONE);
+
+            // check price level
+            priceLevel.setVisibility(View.GONE);
+            informationLocation.setVisibility(LinearLayout.VISIBLE);
+            isGoBack = true;
         }
 
         if (requestCode == RQCODE_FOR_FINDORI && resultCode == RESULT_OK) {
@@ -794,5 +865,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Place place = Autocomplete.getPlaceFromIntent(data);
             edtDestination.setText(place.getAddress());
         }
+
+        if (requestCode == RQCODE_FOR_SEARCH_VIA_VOICE && resultCode == RESULT_OK) {
+            ArrayList<String> matches = data.getStringArrayListExtra("android.speech.extra.RESULTS");
+            String result = matches.get(0);
+            GetPlaceFromText getPlace = new GetPlaceFromText(MapsActivity.this, result);
+            getPlace.execute();
+        }
+    }
+
+    @Override
+    public void getPlaceSuccess(final String[] result) {
+        searchLocation.setText(result[0]);
+        nameLocation.setText(result[0]);
+        addressLocation.setText(result[1]);
+        // check phone number
+        phoneLocation.setVisibility(View.GONE);
+
+        // check rating
+        if (result[4] != null) {
+            ratingLocation.setText("Rating : " + result[4]);
+            ratingLocation.setVisibility(View.VISIBLE);
+            Log.i("Map ", result[4]);
+        } else
+            ratingLocation.setVisibility(View.GONE);
+
+        // check price level
+        priceLevel.setVisibility(View.GONE);
+        informationLocation.setVisibility(LinearLayout.VISIBLE);
+        btnAddFav.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dbManager.FAVORITE_addPlace(new PlaceObject(result[0], result[1], new LatLng(new Double(result[2]), new Double(result[3]))));
+                Toast.makeText(MapsActivity.this, "Địa điểm đã được thêm vào danh sách", Toast.LENGTH_SHORT).show();
+            }
+        });
+        dbManager.HISTORY_addPlace(new PlaceObject(result[0], result[1], new LatLng(new Double(result[2]), new Double(result[3]))));
+        mMap.clear();
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(new Double(result[2]), new Double(result[3])), DEFAULT_MAP_HEIGHT));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(new Double(result[2]), new Double(result[3]))).title(result[1]));
+
     }
 }
