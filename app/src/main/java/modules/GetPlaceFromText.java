@@ -91,19 +91,20 @@ public class GetPlaceFromText {
             return;
         JSONObject jsonData = new JSONObject(data);
         JSONArray candidates = jsonData.getJSONArray("candidates");
-        JSONObject candidate = candidates.getJSONObject(0);
-        this.address = candidate.getString("formatted_address");
-        this.name = candidate.getString("name");
-        if (candidate.has("rating"))
-        {
-            this.rating = candidate.getString("rating");
+        if(candidates.length() > 0) {
+            JSONObject candidate = candidates.getJSONObject(0);
+            this.address = candidate.getString("formatted_address");
+            this.name = candidate.getString("name");
+            if (candidate.has("rating"))
+            {
+                this.rating = candidate.getString("rating");
+            }
+            JSONObject geometry = candidate.getJSONObject("geometry");
+            JSONObject location = geometry.getJSONObject("location");
+            this.lat = location.getString("lat");
+            this.lng = location.getString("lng");
         }
-        JSONObject geometry = candidate.getJSONObject("geometry");
-        JSONObject location = geometry.getJSONObject("location");
-        this.lat = location.getString("lat");
-        this.lng = location.getString("lng");
         arrInfor = new String[]{name, address, lat, lng, rating};
-        Log.d("Voice", data);
         map.getPlaceSuccess(arrInfor);
     }
 }

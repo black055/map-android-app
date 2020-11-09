@@ -47,7 +47,4 @@ dependencies {
     implementation 'com.google.android.gms:play-services-location:17.1.0'
     implementation 'com.airbnb.android:lottie:3.4.0'
     implementation 'com.karumi:dexter:4.2.0'
-    implementation 'org.apache.httpcomponents:httpcore:4.4.1'
-    //noinspection DuplicatePlatformClasses
-    implementation 'org.apache.httpcomponents:httpclient:4.5'
 }
