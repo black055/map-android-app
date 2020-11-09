@@ -347,7 +347,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
             @Override
             public void onComplete(@NonNull Task<Location> task) {
-                if (task.isSuccessful()) {
+                if (task.isSuccessful() && task.getResult() != null) {
                     lastLocation = task.getResult();
                     LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
                     mMap.clear();
