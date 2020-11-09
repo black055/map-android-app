@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -16,6 +17,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -47,6 +49,13 @@ import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.DexterBuilder;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionDeniedResponse;
+import com.karumi.dexter.listener.PermissionGrantedResponse;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.single.PermissionListener;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -139,8 +148,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Thêm find path
         llFindPath = findViewById(R.id.llFindPath);
-        edtOrigin = findViewById(R.id.edtOrigin); edtOrigin.setFocusable(false);
-        edtDestination = findViewById(R.id.edtDestination); edtDestination.setFocusable(false);
+        edtOrigin = findViewById(R.id.edtOrigin);
+        edtOrigin.setFocusable(false);
+        edtDestination = findViewById(R.id.edtDestination);
+        edtDestination.setFocusable(false);
         tvDistance = findViewById(R.id.tvDistance);
         tvDuration = findViewById(R.id.tvDuration);
         btnFindPath = findViewById(R.id.btnFindPath);
@@ -227,6 +238,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     btnSatellite.setTranslationY(llFindPath.getHeight());
                     btnTerrain.setTranslationY(llFindPath.getHeight());
                     informationLocation.setVisibility(LinearLayout.GONE);
+                    searchLocation.setText("");
                     return true;
                 case R.id.place:
                     searchLocation.setVisibility(View.VISIBLE);
@@ -236,27 +248,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     tvDistance.setText(R.string.init_kilometer);
                     tvDuration.setText(R.string.init_second);
                     isFindingPath = false;
-                    Task<Location> locationTask = getCurrentLocation();
-                    locationTask.addOnCompleteListener(new OnCompleteListener<Location>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Location> task) {
-                            if (task.isSuccessful()) {
-                                lastLocation = task.getResult();
-                            }
-                        }
-                    });
                     popupMenu.show();
                     informationLocation.setVisibility(LinearLayout.GONE);
+                    searchLocation.setText("");
                     return true;
                 case R.id.favorite:
                     isFindingPath = false;
                     Intent intent_favorite = new Intent(MapsActivity.this, FavoriteActivity.class);
                     startActivityForResult(intent_favorite, RQCODE_FROM_FAVORITE);
+                    searchLocation.setText("");
                     return true;
                 case R.id.history:
                     isFindingPath = false;
                     Intent intent_history = new Intent(MapsActivity.this, HistoryActivity.class);
                     startActivityForResult(intent_history, RQCODE_FROM_HISTORY);
+                    searchLocation.setText("");
                     return true;
             }
             return false;
@@ -267,103 +273,108 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        ActivityCompat.requestPermissions(MapsActivity.this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, RQCODE_FOR_PERMISSION);
-        if (ContextCompat.checkSelfPermission(MapsActivity.this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
-            locationPermissionGranted = true;
-            Task<Location> locationTask = getCurrentLocation();
-            // di chuyển map đến vị trí hiện tại
-            if (locationTask != null) {
-                locationTask.addOnCompleteListener(new OnCompleteListener<Location>() {
-                @Override
-                public void onComplete(@NonNull Task<Location> task) {
-                    if (task.isSuccessful()) {
-                        lastLocation = task.getResult();
-                        LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-
-                        mMap.addMarker(new MarkerOptions().position(current)
-                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location)));
-
-                        Circle circle = mMap.addCircle(new CircleOptions()
-                                .center(current).radius(80)
-                                .strokeWidth(0)
-                                .strokeColor(Color.parseColor("#225595EC"))
-                                .fillColor(Color.parseColor("#225595EC")));
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current, DEFAULT_MAP_HEIGHT), new GoogleMap.CancelableCallback() {
-                            @Override
-                            public void onFinish() {
-                                navigation.setVisibility(View.VISIBLE);
-                                btnShare.setVisibility(View.VISIBLE);
-                                btnSelectType.setVisibility(View.VISIBLE);
-                                layoutIntro.setVisibility(View.GONE);
-                            }
-
-                            @Override
-                            public void onCancel() {
-
-                            }
-                        });
-                    }
-                }
-
-            });
-                return;
-            }
-        }
-        mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT), new GoogleMap.CancelableCallback() {
-            @Override
-            public void onFinish() {
-                navigation.setVisibility(View.VISIBLE);
-                btnShare.setVisibility(View.VISIBLE);
-                btnSelectType.setVisibility(View.VISIBLE);
-                layoutIntro.setVisibility(View.GONE);
-            }
-
-            @Override
-            public void onCancel() {
-
-            }
-        });
+        getCurrentLocation();
     }
 
     // Chuyển màn hình đến vị trí hiện tại của thiết bị
-    @org.jetbrains.annotations.Nullable
-    private Task<Location> getCurrentLocation() {
-        if (locationPermissionGranted) {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                return null;
-            }
-            Task<Location> locationResult = LocationServices.getFusedLocationProviderClient(MapsActivity.this).getLastLocation();
-            return locationResult;
+    private void getCurrentLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Dexter.withActivity(this).withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                    .withListener(new PermissionListener() {
+                        @Override
+                        public void onPermissionGranted(PermissionGrantedResponse response) {
+                            if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                                    != PackageManager.PERMISSION_GRANTED) {
+                                return;
+                            }
+                            locationPermissionGranted = true;
+                            taskForGetCurLocation();
+                        }
+
+                        @Override
+                        public void onPermissionDenied(PermissionDeniedResponse response) {
+                            mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT), new GoogleMap.CancelableCallback() {
+                                @Override
+                                public void onFinish() {
+                                    navigation.setVisibility(View.VISIBLE);
+                                    btnShare.setVisibility(View.VISIBLE);
+                                    btnSelectType.setVisibility(View.VISIBLE);
+                                    layoutIntro.setVisibility(View.GONE);
+                                }
+
+                                @Override
+                                public void onCancel() {
+
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onPermissionRationaleShouldBeShown(PermissionRequest permission, PermissionToken token) {
+                            token.continuePermissionRequest();
+                        }
+                    }).check();
+        } else if (!locationPermissionGranted) {
+            mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT), new GoogleMap.CancelableCallback() {
+                @Override
+                public void onFinish() {
+                    navigation.setVisibility(View.VISIBLE);
+                    btnShare.setVisibility(View.VISIBLE);
+                    btnSelectType.setVisibility(View.VISIBLE);
+                    layoutIntro.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onCancel() {
+
+                }
+            });
         } else {
-            getLocationPermission();
-            return null;
+            taskForGetCurLocation();
         }
     }
 
-    private void moveMapToCurrentLocation() {
-        LatLng location = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-        Circle circle = mMap.addCircle(new CircleOptions()
-                .center(location).radius(80)
-                .strokeWidth(0)
-                .strokeColor(Color.parseColor("#225595EC"))
-                .fillColor(Color.parseColor("#225595EC")));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, DEFAULT_MAP_HEIGHT));
-        Address address = null;
-        try {
-            address = geocoder.getFromLocation(lastLocation.getLatitude(),lastLocation.getLongitude(), 1).get(0);
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void taskForGetCurLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
         }
-        // Nếu lấy được địa chỉ chi tiết thì hiển thị trên marker, không thì hiển thị "Your current location"
-        if (address != null && address.getAddressLine(0) != null)
-            mMap.addMarker(new MarkerOptions().position(location).title(address
-                    .getAddressLine(0)).icon(BitmapDescriptorFactory
-                    .fromResource(R.drawable.current_location)));
-        else
-            mMap.addMarker(new MarkerOptions().position(location).title("Your current location"));
+        Task<Location> locationResult = LocationServices.getFusedLocationProviderClient(MapsActivity.this).getLastLocation();
+        locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
+            @Override
+            public void onComplete(@NonNull Task<Location> task) {
+                if (task.isSuccessful()) {
+                    lastLocation = task.getResult();
+                    LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+                    mMap.clear();
+                    mMap.addMarker(new MarkerOptions().position(current)
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location)));
+
+                    Circle circle = mMap.addCircle(new CircleOptions()
+                            .center(current).radius(80)
+                            .strokeWidth(0)
+                            .strokeColor(Color.parseColor("#225595EC"))
+                            .fillColor(Color.parseColor("#225595EC")));
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current, DEFAULT_MAP_HEIGHT), new GoogleMap.CancelableCallback() {
+                        @Override
+                        public void onFinish() {
+                            navigation.setVisibility(View.VISIBLE);
+                            btnShare.setVisibility(View.VISIBLE);
+                            btnSelectType.setVisibility(View.VISIBLE);
+                            layoutIntro.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onCancel() {
+
+                        }
+                    });
+                }
+            }
+
+        });
     }
 
     private void setActionListener() {
@@ -374,17 +385,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (informationLocation.getVisibility() == LinearLayout.VISIBLE) {
                     informationLocation.setVisibility(LinearLayout.GONE);
                 }
-                Task<Location> locationTask = getCurrentLocation();
-
-                locationTask.addOnCompleteListener(new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Location> task) {
-                        if (task.isSuccessful()) {
-                            lastLocation = task.getResult();
-                            moveMapToCurrentLocation();
-                        }
-                    }
-                });
+                getCurrentLocation();
             }
         });
 
@@ -468,21 +469,42 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnShare.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Task<Location> locationTask = getCurrentLocation();
+                Dexter.withActivity((Activity)v.getContext()).withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                        .withListener(new PermissionListener() {
+                            @Override
+                            public void onPermissionGranted(PermissionGrantedResponse response) {
+                                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                                        != PackageManager.PERMISSION_GRANTED) {
+                                    return;
+                                }
+                                locationPermissionGranted = true;
+                                Task<Location> locationResult = LocationServices.getFusedLocationProviderClient(MapsActivity.this).getLastLocation();
+                                locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Location> task) {
+                                        if (task.isSuccessful()) {
+                                            lastLocation = task.getResult();
+                                            Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                                            sharingIntent.setType("text/plain");
+                                            sharingIntent.putExtra(Intent.EXTRA_TEXT, "https://maps.google.com?q="
+                                                    + lastLocation.getLatitude() + "," + lastLocation.getLongitude());
+                                            startActivity(Intent.createChooser(sharingIntent, "Share via"));
+                                        }
+                                    }
 
-                locationTask.addOnCompleteListener(new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Location> task) {
-                        if (task.isSuccessful()) {
-                            lastLocation = task.getResult();
-                            Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
-                            sharingIntent.setType("text/plain");
-                            sharingIntent.putExtra(Intent.EXTRA_TEXT, "https://maps.google.com?q="
-                                    + lastLocation.getLatitude() + "," + lastLocation.getLongitude());
-                            startActivity(Intent.createChooser(sharingIntent, "Share via"));
-                        }
-                    }
-                });
+                                });
+                            }
+
+                            @Override
+                            public void onPermissionDenied(PermissionDeniedResponse response) {
+                                Toast.makeText(getApplicationContext(), "Yêu cầu truy cập vị trí", Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onPermissionRationaleShouldBeShown(PermissionRequest permission, PermissionToken token) {
+                                token.continuePermissionRequest();
+                            }
+                        }).check();
             }
         });
 
@@ -497,24 +519,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnFindFromCurrent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Task<Location> locationTask = getCurrentLocation();
+                Dexter.withActivity((Activity)v.getContext()).withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                        .withListener(new PermissionListener() {
+                            @Override
+                            public void onPermissionGranted(PermissionGrantedResponse response) {
+                                if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
+                                        != PackageManager.PERMISSION_GRANTED) {
+                                    return;
+                                }
+                                locationPermissionGranted = true;
+                                Task<Location> locationResult = LocationServices.getFusedLocationProviderClient(MapsActivity.this).getLastLocation();
+                                locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Location> task) {
+                                        if (task.isSuccessful()) {
+                                            lastLocation = task.getResult();
+                                            String origin = "" + lastLocation.getLatitude() +"," + lastLocation.getLongitude();
+                                            String destination = searchLocation.getText().toString();
+                                            try {
+                                                new DirectionFinder(MapsActivity.this, origin, destination).execute();
+                                                informationLocation.setVisibility(View.GONE);
+                                            } catch (UnsupportedEncodingException e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
+                                    }
 
-                locationTask.addOnCompleteListener(new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Location> task) {
-                        if (task.isSuccessful()) {
-                            lastLocation = task.getResult();
-                            String origin = "" + lastLocation.getLatitude() +"," + lastLocation.getLongitude();
-                            String destination = searchLocation.getText().toString();
-                            try {
-                                new DirectionFinder(MapsActivity.this, origin, destination).execute();
-                                informationLocation.setVisibility(View.GONE);
-                            } catch (UnsupportedEncodingException e) {
-                                e.printStackTrace();
+                                });
                             }
-                        }
-                    }
-                });
+
+                            @Override
+                            public void onPermissionDenied(PermissionDeniedResponse response) {
+                                Toast.makeText(getApplicationContext(), "Yêu cầu truy cập vị trí", Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onPermissionRationaleShouldBeShown(PermissionRequest permission, PermissionToken token) {
+                                token.continuePermissionRequest();
+                            }
+                        }).check();
             }
         });
 
@@ -523,9 +566,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public boolean onMenuItemClick(MenuItem item) {
                 //getCurrentLocation();
                 if (locationPermissionGranted && lastLocation != null) {
-                    mMap.clear();
-                    moveMapToCurrentLocation();
                     String type="";
+                    LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
+                    mMap.clear();
+                    mMap.addMarker(new MarkerOptions().position(current)
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location)));
+
+                    Circle circle = mMap.addCircle(new CircleOptions()
+                            .center(current).radius(80)
+                            .strokeWidth(0)
+                            .strokeColor(Color.parseColor("#225595EC"))
+                            .fillColor(Color.parseColor("#225595EC")));
                     switch (item.getItemId()) {
                         case R.id.menuATM:
                             type="atm";
@@ -561,9 +612,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (ContextCompat.checkSelfPermission(MapsActivity.this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             locationPermissionGranted = true;
-            getCurrentLocation();
         }
-        else ActivityCompat.requestPermissions(MapsActivity.this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, RQCODE_FOR_PERMISSION);
+        else {
+            ActivityCompat.requestPermissions(MapsActivity.this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, RQCODE_FOR_PERMISSION);
+        }
     }
 
     @Override
@@ -575,7 +627,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (requestCode == RQCODE_FOR_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 locationPermissionGranted = true;
-                getCurrentLocation();
             }
         }
     }
