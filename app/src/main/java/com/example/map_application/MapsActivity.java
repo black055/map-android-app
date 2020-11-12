@@ -9,9 +9,13 @@ import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
@@ -32,6 +36,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
@@ -172,7 +177,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         popupMenu = new PopupMenu(MapsActivity.this, navigation);
         popupMenu.getMenuInflater().inflate(R.menu.places_picker_menu, popupMenu.getMenu());
-        //popupMenu.setForceShowIcon(true);
+        popupMenu.setForceShowIcon(true);
 
         // Component để hiển thị lựa chọn kiểu bản đồ
         btnSelectType = findViewById(R.id.floating_button_map_type);
@@ -652,6 +657,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    //đổi icon từ định dạng vector sang bitmap
+    private BitmapDescriptor bitmapDescriptorFromVector(Context context, int vectorResId) {
+        Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
+        vectorDrawable.setBounds(0, 0, vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight());
+        Bitmap bitmap = Bitmap.createBitmap(vectorDrawable.getIntrinsicWidth(), vectorDrawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        vectorDrawable.draw(canvas);
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
     //Find path-----------
     @Override
     public void onDirectionFinderStart() {
@@ -683,7 +698,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             //add marker điểm đầu, điểm cuối lên mMap
             mMap.addMarker(new MarkerOptions()
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.position_start_24))
+                    .icon(bitmapDescriptorFromVector(MapsActivity.this, R.drawable.ic_position_start))
                     .title(route.startAddress)
                     .position(route.startLocation));
             mMap.addMarker(new MarkerOptions()
