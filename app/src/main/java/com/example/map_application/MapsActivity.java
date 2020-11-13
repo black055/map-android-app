@@ -233,6 +233,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         informationLocation.setVisibility(View.VISIBLE);
                         isGoBack = false;
                     }
+
+                    if (isFindingPath) {
+                        searchByVoice.setVisibility(View.VISIBLE);
+                    }
                     llFindPath.setVisibility(View.GONE);
                     edtOrigin.setText("");
                     edtDestination.setText("");
@@ -269,7 +273,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     edtDestination.setText("");
                     tvDistance.setText(R.string.init_kilometer);
                     tvDuration.setText(R.string.init_second);
-                    isFindingPath = false;
+                    if (isFindingPath) {
+                        btnSelectType.setTranslationY(0);
+                        btnDefault.setTranslationY(0);
+                        btnSatellite.setTranslationY(0);
+                        btnTerrain.setTranslationY(0);
+                        isFindingPath = false;
+                    }
                     popupMenu.show();
                     informationLocation.setVisibility(LinearLayout.GONE);
                     searchLocation.setText("");

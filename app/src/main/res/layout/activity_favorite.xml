@@ -22,14 +22,14 @@
             android:id="@+id/imageView"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:src="@drawable/ic_baseline_map_favorite_24" />
+            android:src="@drawable/icon_bookmark_24" />
 
         <TextView
             android:id="@+id/tvFavorite"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="15dp"
-            android:text="Danh sách địa điểm yêu thích"
+            android:text="Đã lưu"
             android:textSize="22sp" />
     </LinearLayout>
 

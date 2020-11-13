@@ -21,8 +21,8 @@
     <item
         android:id="@+id/favorite"
         android:enabled="true"
-        android:icon="@drawable/ic_baseline_favorite_24"
-        android:title="Yêu thích" />
+        android:icon="@drawable/ic_baseline_bookmark_24"
+        android:title="Đã lưu" />
 
     <item
         android:id="@+id/history"
