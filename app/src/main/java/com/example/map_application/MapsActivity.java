@@ -68,6 +68,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import modules.CovidInterface;
 import modules.DirectionFinder;
 import modules.DirectionFinderListener;
 import modules.GetPlaceFromText;
@@ -75,9 +76,10 @@ import modules.GetPlaceInterface;
 import modules.PlaceObject;
 import modules.Route;
 import modules.DBManager;
+import modules.CovidAPI;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
-        , DirectionFinderListener, GetPlaceInterface {
+        , DirectionFinderListener, GetPlaceInterface , CovidInterface {
 
     // Request code for Intent
     private final int RQCODE_FOR_PERMISSION = 1;
@@ -306,6 +308,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         searchByVoice.setVisibility(View.GONE);
         getCurrentLocation();
+        new CovidAPI(MapsActivity.this).execute();
     }
 
     // Chuyển màn hình đến vị trí hiện tại của thiết bị
@@ -911,5 +914,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(new Double(result[2]), new Double(result[3])), DEFAULT_MAP_HEIGHT));
         mMap.addMarker(new MarkerOptions().position(new LatLng(new Double(result[2]), new Double(result[3]))).title(result[1]));
 
+    }
+
+    @Override
+    public void getDataSuccessful(ArrayList<String> nameCountry, ArrayList<Integer> cases, ArrayList<Integer> dead, ArrayList<String> lat, ArrayList<String> lng) {
+        for (int i = 0; i < nameCountry.size(); ++i) {
+            MarkerOptions marker = new MarkerOptions()
+                    .position(new LatLng(new Double(lat.get(i)), new Double(lng.get(i))))
+                    .title(nameCountry.get(i))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_16))
+                    .alpha(0.3f);
+
+            if (cases.get(i) >= 10000000) {
+                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_48));
+            }
+            else if (cases.get(i) >= 5000000) {
+                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_32));
+            }
+            else if (cases.get(i) >= 1000000) {
+                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_24));
+            }
+            mMap.addMarker(marker);
+        }
     }
 }

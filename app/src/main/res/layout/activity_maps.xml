@@ -140,7 +140,7 @@
         android:background="@drawable/info_background"
         android:orientation="vertical"
         android:padding="10dp"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@+id/map"
         tools:layout_editor_absoluteX="0dp">
 
@@ -184,7 +184,8 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
+            android:layout_height="wrap_content">
+
             <Button
                 android:id="@+id/btnAddFav"
                 android:layout_width="wrap_content"
@@ -197,6 +198,7 @@
                 android:textSize="10sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/searchLocation" />
+
             <Button
                 android:id="@+id/btnFindFromCurrent"
                 android:layout_width="wrap_content"
@@ -302,7 +304,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#FFFFFF"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
