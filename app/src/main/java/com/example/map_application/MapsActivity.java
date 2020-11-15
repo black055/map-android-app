@@ -944,20 +944,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             MarkerOptions marker = new MarkerOptions()
                     .position(new LatLng(Double.parseDouble(lat.get(i)), Double.parseDouble(lng.get(i))))
-                    .title(nameCountry.get(i));
-
-            if (cases.get(i) < 10000000) {
-                marker.icon(BitmapDescriptorFactory.fromBitmap(MapsActivity.createDrawableFromView(this, markerView)));
-            }
-            else if (cases.get(i) >= 10000000) {
-                marker.icon(BitmapDescriptorFactory.fromBitmap(MapsActivity.createDrawableFromView(this, markerView)));
-            }
-            else if (cases.get(i) >= 5000000) {
-                marker.icon(BitmapDescriptorFactory.fromBitmap(MapsActivity.createDrawableFromView(this, markerView)));
-            }
-            else if (cases.get(i) >= 1000000) {
-                marker.icon(BitmapDescriptorFactory.fromBitmap(MapsActivity.createDrawableFromView(this, markerView)));
-            }
+                    .title(nameCountry.get(i))
+                    .icon(BitmapDescriptorFactory.fromBitmap(MapsActivity.createDrawableFromView(this, markerView)));
 
             mMap.addMarker(marker);
         }
