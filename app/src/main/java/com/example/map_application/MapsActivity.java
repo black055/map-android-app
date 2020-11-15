@@ -20,7 +20,9 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -28,9 +30,11 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.map_application.customtextview.CircularTextView;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -41,7 +45,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -73,6 +76,7 @@ import modules.DirectionFinder;
 import modules.DirectionFinderListener;
 import modules.GetPlaceFromText;
 import modules.GetPlaceInterface;
+import modules.NearbyLocationSearch;
 import modules.PlaceObject;
 import modules.Route;
 import modules.DBManager;
@@ -136,6 +140,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ImageView searchByVoice;
     String[] resultByVoiceSearch;
 
+    // Convert a view to bitmap
+    public static Bitmap createDrawableFromView(Context context, View view) {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        view.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT));
+        view.measure(displayMetrics.widthPixels, displayMetrics.heightPixels);
+        view.layout(0, 0, displayMetrics.widthPixels, displayMetrics.heightPixels);
+        view.buildDrawingCache();
+        Bitmap bitmap = Bitmap.createBitmap(view.getMeasuredWidth(), view.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        view.draw(canvas);
+
+        return bitmap;
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -174,7 +193,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         isFindingPath = false;
 
         // Thêm navigation bar
-        navigation = (BottomNavigationView) findViewById(R.id.bottom_navigation);
+        navigation = findViewById(R.id.bottom_navigation);
         navigation.setSelectedItemId(R.id.home);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         popupMenu = new PopupMenu(MapsActivity.this, navigation);
@@ -919,21 +938,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void getDataSuccessful(ArrayList<String> nameCountry, ArrayList<Integer> cases, ArrayList<Integer> dead, ArrayList<String> lat, ArrayList<String> lng) {
         for (int i = 0; i < nameCountry.size(); ++i) {
-            MarkerOptions marker = new MarkerOptions()
-                    .position(new LatLng(new Double(lat.get(i)), new Double(lng.get(i))))
-                    .title(nameCountry.get(i))
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_16))
-                    .alpha(0.3f);
+            View markerView = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.covid_area_marker, null);
+            CircularTextView numTxt = markerView.findViewById(R.id.circularTextView);
+            numTxt.setText(String.valueOf(cases.get(i)));
 
-            if (cases.get(i) >= 10000000) {
-                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_48));
+            MarkerOptions marker = new MarkerOptions()
+                    .position(new LatLng(Double.parseDouble(lat.get(i)), Double.parseDouble(lng.get(i))))
+                    .title(nameCountry.get(i));
+
+            if (cases.get(i) < 10000000) {
+                marker.icon(BitmapDescriptorFactory.fromBitmap(MapsActivity.createDrawableFromView(this, markerView)));
+            }
+            else if (cases.get(i) >= 10000000) {
+                marker.icon(BitmapDescriptorFactory.fromBitmap(MapsActivity.createDrawableFromView(this, markerView)));
             }
             else if (cases.get(i) >= 5000000) {
-                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_32));
+                marker.icon(BitmapDescriptorFactory.fromBitmap(MapsActivity.createDrawableFromView(this, markerView)));
             }
             else if (cases.get(i) >= 1000000) {
-                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_24));
+                marker.icon(BitmapDescriptorFactory.fromBitmap(MapsActivity.createDrawableFromView(this, markerView)));
             }
+
             mMap.addMarker(marker);
         }
     }

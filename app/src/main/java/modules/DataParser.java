@@ -1,4 +1,4 @@
-package com.example.map_application;
+package modules;
 
 import org.json.JSONArray;
 import org.json.JSONException;

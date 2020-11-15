@@ -1,9 +1,9 @@
-package com.example.map_application;
+package modules;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.widget.Toast;
 
+import com.example.map_application.R;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
