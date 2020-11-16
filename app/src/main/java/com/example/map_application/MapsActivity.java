@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -16,7 +17,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,12 +36,14 @@ import android.widget.Toast;
 
 import com.example.map_application.customtextview.CircularTextView;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
@@ -93,12 +95,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private final int RQCODE_FOR_FINDORI = 5;
     private final int RQCODE_FOR_FINDDES = 6;
     private final int RQCODE_FOR_SEARCH_VIA_VOICE = 7;
-    private final int RQCODE_FOR_SEARCH_VOICE = 8;
     private final int DEFAULT_MAP_HEIGHT = 17;
 
     private boolean locationPermissionGranted;
     private GoogleMap mMap;
-    private Geocoder geocoder;
 
 
     //find path
@@ -122,7 +122,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     // Navigation Bar
     private BottomNavigationView navigation;
-    private String menuSelected;
 
     // Location information
     private LinearLayout informationLocation;
@@ -138,7 +137,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     // Search via voice
     private ImageView searchByVoice;
-    String[] resultByVoiceSearch;
+
+    // Coronavirus
+    FloatingActionButton btnCorona;
 
     // Convert a view to bitmap
     public static Bitmap createDrawableFromView(Context context, View view) {
@@ -166,7 +167,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment.getMapAsync(this);
         Places.initialize(getApplicationContext(), getResources().getString(R.string.google_maps_key));
 
-        geocoder = new Geocoder(MapsActivity.this);
         searchLocation = findViewById(R.id.searchLocation);
         searchByVoice = findViewById(R.id.searchVoice);
         searchLocation.setFocusable(false);
@@ -218,6 +218,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnAddFav = informationLocation.findViewById(R.id.btnAddFav);
 
         layoutIntro = findViewById(R.id.layoutIntro);
+        btnCorona = findViewById(R.id.btnCorona);
 
         // ẩn ban đầu cho một số view
         selectedMaptype = false;
@@ -231,6 +232,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnShare.setVisibility(View.GONE);
         btnSelectType.setVisibility(View.GONE);
         searchByVoice.setVisibility(View.GONE);
+        btnCorona.setVisibility(View.GONE);
         isGoBack = false;
         setActionListener();
     }
@@ -327,7 +329,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         searchByVoice.setVisibility(View.GONE);
         getCurrentLocation();
-        new CovidAPI(MapsActivity.this).execute();
     }
 
     // Chuyển màn hình đến vị trí hiện tại của thiết bị
@@ -412,7 +413,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location)));
 
                     Circle circle = mMap.addCircle(new CircleOptions()
-                            .center(current).radius(80)
+                            .center(current).radius(200)
                             .strokeWidth(0)
                             .strokeColor(Color.parseColor("#225595EC"))
                             .fillColor(Color.parseColor("#225595EC")));
@@ -424,6 +425,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             btnSelectType.setVisibility(View.VISIBLE);
                             layoutIntro.setVisibility(View.GONE);
                             searchByVoice.setVisibility(View.VISIBLE);
+                            btnCorona.setVisibility(View.VISIBLE);
                         }
 
                         @Override
@@ -472,7 +474,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     btnTerrain.show();
                     btnSatellite.show();
                     btnDefault.show();
-                    ;
                     selectedMaptype = true;
                 }
             }
@@ -621,6 +622,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
 
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @SuppressLint("NonConstantResourceId")
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 //getCurrentLocation();
@@ -632,7 +634,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location)));
 
                     Circle circle = mMap.addCircle(new CircleOptions()
-                            .center(current).radius(80)
+                            .center(current).radius(200)
                             .strokeWidth(0)
                             .strokeColor(Color.parseColor("#225595EC"))
                             .fillColor(Color.parseColor("#225595EC")));
@@ -672,6 +674,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 intent.putExtra("android.speech.extra.LANGUAGE_MODEL", "free_form");
                 intent.putExtra("android.speech.extra.PROMPT", "Speak Now");
                 startActivityForResult(intent, RQCODE_FOR_SEARCH_VIA_VOICE);
+            }
+        });
+
+        btnCorona.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new CovidAPI(MapsActivity.this).execute();
             }
         });
     }
@@ -900,7 +909,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void getPlaceSuccess(final String[] result) {
-        if (result[0] == "" && result[1] == "" && result[4] == null) {
+        if (result[0].equals("") && result[1].equals("") && result[4] == null) {
             Toast.makeText(MapsActivity.this, "Không tìm thấy kết quả phù hợp", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -924,30 +933,68 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnAddFav.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dbManager.FAVORITE_addPlace(new PlaceObject(result[0], result[1], new LatLng(new Double(result[2]), new Double(result[3]))));
+                dbManager.FAVORITE_addPlace(new PlaceObject(result[0], result[1], new LatLng(Double.parseDouble(result[2]), Double.parseDouble(result[3]))));
                 Toast.makeText(MapsActivity.this, "Địa điểm đã được thêm vào danh sách", Toast.LENGTH_SHORT).show();
             }
         });
-        dbManager.HISTORY_addPlace(new PlaceObject(result[0], result[1], new LatLng(new Double(result[2]), new Double(result[3]))));
+        dbManager.HISTORY_addPlace(new PlaceObject(result[0], result[1], new LatLng(Double.parseDouble(result[2]), Double.parseDouble(result[3]))));
         mMap.clear();
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(new Double(result[2]), new Double(result[3])), DEFAULT_MAP_HEIGHT));
-        mMap.addMarker(new MarkerOptions().position(new LatLng(new Double(result[2]), new Double(result[3]))).title(result[1]));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(Double.parseDouble(result[2]), Double.parseDouble(result[3])), DEFAULT_MAP_HEIGHT));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(result[2]), Double.parseDouble(result[3]))).title(result[1]));
 
     }
 
     @Override
-    public void getDataSuccessful(ArrayList<String> nameCountry, ArrayList<Integer> cases, ArrayList<Integer> dead, ArrayList<String> lat, ArrayList<String> lng) {
+    public void getDataSuccessful(final ArrayList<String> nameCountry, final ArrayList<Integer> cases, ArrayList<Integer> dead, final ArrayList<String> lat, final ArrayList<String> lng) {
+
+        mMap.clear();
+        final ArrayList<MarkerOptions> non_text = new ArrayList<>();
+        final ArrayList<MarkerOptions> with_text = new ArrayList<>();
+
         for (int i = 0; i < nameCountry.size(); ++i) {
             View markerView = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.covid_area_marker, null);
             CircularTextView numTxt = markerView.findViewById(R.id.circularTextView);
             numTxt.setText(String.valueOf(cases.get(i)));
-
             MarkerOptions marker = new MarkerOptions()
                     .position(new LatLng(Double.parseDouble(lat.get(i)), Double.parseDouble(lng.get(i))))
                     .title(nameCountry.get(i))
                     .icon(BitmapDescriptorFactory.fromBitmap(MapsActivity.createDrawableFromView(this, markerView)));
 
-            mMap.addMarker(marker);
+            with_text.add(marker);
+
+            numTxt.setText("");
+            marker = new MarkerOptions()
+                    .position(new LatLng(Double.parseDouble(lat.get(i)), Double.parseDouble(lng.get(i))))
+                    .title(nameCountry.get(i))
+                    .icon(BitmapDescriptorFactory.fromBitmap(MapsActivity.createDrawableFromView(this, markerView)));
+            non_text.add(marker);
         }
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), -DEFAULT_MAP_HEIGHT));
+        for(int i = 0; i < non_text.size(); ++i) {
+            mMap.addMarker(non_text.get(i));
+        }
+
+        mMap.setOnCameraMoveListener(new GoogleMap.OnCameraMoveListener() {
+            boolean isZooming = false;
+            @Override
+            public void onCameraMove() {
+                Log.d("isZooming: ", String.valueOf(isZooming));
+                CameraPosition cameraPosition = mMap.getCameraPosition();
+                if(cameraPosition.zoom >= 6.0 && isZooming) {
+                    mMap.clear();
+                    for (int i = 0; i < with_text.size(); ++i) {
+                        mMap.addMarker(with_text.get(i));
+                    }
+                    isZooming = false;
+                }
+                else if (cameraPosition.zoom < 6.0 && !isZooming) {
+                    mMap.clear();
+                    for (int i = 0; i < non_text.size(); ++i) {
+                        mMap.addMarker(non_text.get(i));
+                    }
+                    isZooming = true;
+                }
+            }
+        });
     }
 }

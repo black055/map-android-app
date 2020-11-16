@@ -119,6 +119,21 @@
         app:srcCompat="@drawable/ic_baseline_share_24"
         tools:ignore="MissingConstraints,VectorDrawableCompat" />
 
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnCorona"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|right"
+        android:layout_marginBottom="12dp"
+        app:backgroundTint="#FFFFFF"
+        app:layout_constraintBottom_toTopOf="@+id/btnShare"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.954"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/ic_baseline_coronavirus_24"
+        tools:ignore="MissingConstraints,VectorDrawableCompat" />
+
     <ImageView
         android:id="@+id/btnCurLocation"
         android:layout_width="35dp"
@@ -140,7 +155,7 @@
         android:background="@drawable/info_background"
         android:orientation="vertical"
         android:padding="10dp"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="@+id/map"
         tools:layout_editor_absoluteX="0dp">
 
@@ -231,7 +246,7 @@
         android:layout_height="wrap_content"
         android:background="@drawable/background_with_shadow"
         android:orientation="vertical"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/map">
 
@@ -304,7 +319,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#FFFFFF"
-        android:visibility="gone"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
