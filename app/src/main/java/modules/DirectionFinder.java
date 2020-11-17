@@ -30,11 +30,13 @@ public class DirectionFinder {
     private DirectionFinderListener listener;
     private String origin;
     private String destination;
+    private String travelMode;
 
-    public DirectionFinder(DirectionFinderListener listener, String origin, String destination) {
+    public DirectionFinder(DirectionFinderListener listener, String origin, String destination, String travelMode) {
         this.listener = listener;
         this.origin = origin;
         this.destination = destination;
+        this.travelMode = travelMode == null ? "driving" : travelMode;
     }
 
     public void execute() throws UnsupportedEncodingException {
@@ -46,7 +48,10 @@ public class DirectionFinder {
         String urlOrigin = URLEncoder.encode(origin, "utf-8");
         String urlDestination = URLEncoder.encode(destination, "utf-8");
 
-        return DIRECTION_URL_API + "origin=" + urlOrigin + "&destination=" + urlDestination + "&key=" + GOOGLE_API_KEY;
+        return DIRECTION_URL_API + "origin=" + urlOrigin
+                + "&destination=" + urlDestination
+                + "&mode=" + travelMode
+                + "&key=" + GOOGLE_API_KEY;
     }
 
     private class DownloadRawData extends AsyncTask<String, Void, String> {

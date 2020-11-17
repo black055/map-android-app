@@ -106,9 +106,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private TextView tvDuration, tvDistance;
     private LinearLayout llFindPath;
     private List<Polyline> polylinePaths = new ArrayList<>();
-    private Button btnFindPath, btnFindFromCurrent;
+    private Button btnFindPath, btnFindFromCurrent,
+            btnDrivingMode, btnWalkingMode, btnBicyclingMode, btnTransitMode;
+    private ImageView ivSetOriginByCurrentPosition;
     private PopupMenu popupMenu;
     private boolean isFindingPath;
+    private String travelMode;
     //---------
     private Location lastLocation;
     private LatLng defaultLocation;
@@ -191,6 +194,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnFindPath = findViewById(R.id.btnFindPath);
         btnFindFromCurrent = findViewById(R.id.btnFindFromCurrent);
         isFindingPath = false;
+        //Chọn phương thức di chuyển
+        travelMode = "driving";
+        btnDrivingMode = findViewById(R.id.btnDrivingMode);
+        btnBicyclingMode = findViewById(R.id.btnBicyclingMode);
+        btnWalkingMode = findViewById(R.id.btnWalkingMode);
+        btnTransitMode = findViewById(R.id.btnTransitMode);
+        ivSetOriginByCurrentPosition = findViewById(R.id.ivSetOriginByCurrentPosition);
 
         // Thêm navigation bar
         navigation = findViewById(R.id.bottom_navigation);
@@ -266,6 +276,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     tvDistance.setText(R.string.init_kilometer);
                     tvDuration.setText(R.string.init_second);
                     isFindingPath = false;
+                    //Xóa marker, polyline
+                    travelMode = "driving";
+                    btnDrivingMode.performClick();
                     llFindPath.setVisibility(View.INVISIBLE);
                     btnSelectType.setTranslationY(0);
                     btnDefault.setTranslationY(0);
@@ -597,7 +610,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                             String origin = "" + lastLocation.getLatitude() + "," + lastLocation.getLongitude();
                                             String destination = searchLocation.getText().toString();
                                             try {
-                                                new DirectionFinder(MapsActivity.this, origin, destination).execute();
+                                                new DirectionFinder(MapsActivity.this, origin, destination, travelMode).execute();
                                                 informationLocation.setVisibility(View.GONE);
                                             } catch (UnsupportedEncodingException e) {
                                                 e.printStackTrace();
@@ -681,6 +694,63 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View v) {
                 new CovidAPI(MapsActivity.this).execute();
+            }
+        });
+
+        //Event click thay đổi travel mode (mặc định là tìm đường đi theo xe)
+        btnDrivingMode.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+            @Override
+            public void onClick(View v) {
+                tvDistance.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_car, 0, 0,0);
+                //Nếu đang là driving thì thoát
+                if (travelMode.equals("driving")) return;
+                travelMode = "driving";
+                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest();
+            }
+        });
+
+        btnBicyclingMode.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+            @Override
+            public void onClick(View v) {
+                tvDistance.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bike_24, 0, 0,0);
+                if (travelMode.equals("bicycling")) return;
+                travelMode = "bicycling";
+                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest();
+            }
+        });
+
+        btnWalkingMode.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+            @Override
+            public void onClick(View v) {
+                tvDistance.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_walk_24, 0, 0,0);
+                if (travelMode.equals("walking")) return;
+                travelMode = "walking";
+                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest();
+            }
+        });
+
+        btnTransitMode.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+            @Override
+            public void onClick(View v) {
+                tvDistance.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bus_24, 0, 0,0);
+                if (travelMode.equals("transit")) return;
+                travelMode = "transit";
+                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest();
+            }
+        });
+
+        //Hiển thị tọa độ vị trí hiện tại ở ô edit text origin
+        ivSetOriginByCurrentPosition.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getCurrentLocation();
+                String temp = String.valueOf(lastLocation.getLatitude()) + ", "
+                        + String.valueOf(lastLocation.getLongitude());
+                edtOrigin.setText(temp);
             }
         });
     }
@@ -774,7 +844,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         try {
             // Tìm đường dựa vào address điểm đầu, cuối
-            new DirectionFinder(this, origin, destination).execute();
+            new DirectionFinder(this, origin, destination, travelMode).execute();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }

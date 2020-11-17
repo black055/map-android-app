@@ -32,7 +32,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/searchLocation"
         app:srcCompat="@drawable/ic_baseline_map_24"
-        tools:ignore="MissingConstraints,VectorDrawableCompat" />
+        tools:ignore="MissingConstraints,VectorDrawableCompat"
+        tools:visibility="gone" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/map_default"
@@ -47,7 +48,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/map_terrain"
         app:srcCompat="@drawable/type_default"
-        tools:ignore="MissingConstraints,VectorDrawableCompat" />
+        tools:ignore="MissingConstraints,VectorDrawableCompat"
+        tools:visibility="gone" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/map_satellite"
@@ -64,7 +66,8 @@
         app:layout_constraintTop_toBottomOf="@id/floating_button_map_type"
         app:layout_constraintVertical_bias="0.03"
         app:srcCompat="@drawable/type_satellite"
-        tools:ignore="MissingConstraints,VectorDrawableCompat" />
+        tools:ignore="MissingConstraints,VectorDrawableCompat"
+        tools:visibility="gone" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/map_terrain"
@@ -82,7 +85,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/searchLocation"
         app:srcCompat="@drawable/type_terrain"
-        tools:ignore="MissingConstraints,VectorDrawableCompat" />
+        tools:ignore="MissingConstraints,VectorDrawableCompat"
+        tools:visibility="gone" />
 
     <EditText
         android:id="@+id/searchLocation"
@@ -101,7 +105,8 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="gone" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnShare"
@@ -250,6 +255,84 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/map">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <HorizontalScrollView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="3"
+                android:scrollbars="none"
+                android:background="@drawable/travel_mode_background"
+                android:layout_marginRight="20dp"
+                android:layout_marginLeft="12dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginBottom="3dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnDrivingMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginLeft="4dp"
+                        android:layout_marginRight="30dp"
+                        android:background="@drawable/btn_travelmode_background"
+                        android:drawableLeft="@drawable/ic_car"
+                        android:paddingLeft="5dp"
+                        android:text="Xe" />
+
+                    <Button
+                        android:id="@+id/btnWalkingMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginRight="30dp"
+                        android:background="@drawable/btn_travelmode_background"
+                        android:drawableLeft="@drawable/ic_baseline_directions_walk_24"
+                        android:paddingLeft="5dp"
+                        android:text="Đi bộ" />
+
+                    <Button
+                        android:id="@+id/btnBicyclingMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginRight="30dp"
+                        android:background="@drawable/btn_travelmode_background"
+                        android:drawableLeft="@drawable/ic_baseline_directions_bike_24"
+                        android:paddingLeft="5dp"
+                        android:text="Xe đạp" />
+
+                    <Button
+                        android:id="@+id/btnTransitMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginRight="4dp"
+                        android:background="@drawable/btn_travelmode_background"
+                        android:drawableLeft="@drawable/ic_baseline_directions_bus_24"
+                        android:paddingLeft="5dp"
+                        android:text="Bus" />
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <ImageView
+                android:id="@+id/ivSetOriginByCurrentPosition"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginRight="12dp"
+                android:layout_weight="1"
+                android:background="@drawable/btn_travelmode_background"
+                android:paddingLeft="15dp"
+                android:paddingTop="10dp"
+                android:paddingRight="15dp"
+                android:paddingBottom="10dp"
+                android:src="@drawable/ic_target_48" />
+        </LinearLayout>
+
         <EditText
             android:id="@+id/edtOrigin"
             android:layout_width="match_parent"
@@ -323,7 +406,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="gone">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/intro_layout"
@@ -371,6 +455,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.044" />
+        app:layout_constraintVertical_bias="0.044"
+        tools:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
