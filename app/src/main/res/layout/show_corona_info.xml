@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/corona_info"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/sheet_background"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tvNameCountry"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:layout_marginBottom="20dp"
+        android:gravity="center"
+        android:text="Country"
+        android:textSize="24sp" />
+
+    <TextView
+        android:id="@+id/tvCases"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:gravity="center"
+        android:text="Cases"
+        android:textColor="#FF9800"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/tvDead"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:gravity="center"
+        android:text="Dead"
+        android:textColor="#FF0303"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/tvRecovered"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="90dp"
+        android:gravity="center"
+        android:text="Recovered"
+        android:textColor="#4CAF50"
+        android:textSize="18sp" />
+</LinearLayout>

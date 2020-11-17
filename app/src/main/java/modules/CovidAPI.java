@@ -23,17 +23,19 @@ public class CovidAPI {
     private ArrayList<String> nameCountry;
     private ArrayList<Integer> cases;
     private ArrayList<Integer> dead;
+    private ArrayList<Integer> recovered;
     private ArrayList<String> lat;
     private ArrayList<String> lng;
 
     CovidInterface main;
 
     public CovidAPI(CovidInterface caller) {
-        ArrayList<String> nameCountry = new ArrayList<>();
-        ArrayList<Integer> cases = new ArrayList<>();
-        ArrayList<Integer> dead = new ArrayList<>();
-        ArrayList<String> lat = new ArrayList<>();
-        ArrayList<String> lng = new ArrayList<>();
+        nameCountry = new ArrayList<>();
+        cases = new ArrayList<>();
+        dead = new ArrayList<>();
+        recovered = new ArrayList<>();
+        lat = new ArrayList<>();
+        lng = new ArrayList<>();
         main = caller;
     }
 
@@ -78,11 +80,6 @@ public class CovidAPI {
     }
 
     private void parseJSon(String data) throws JSONException {
-        ArrayList<String> nameCountry = new ArrayList<>();
-        ArrayList<Integer> cases = new ArrayList<>();
-        ArrayList<Integer> dead = new ArrayList<>();
-        ArrayList<String> lat = new ArrayList<>();
-        ArrayList<String> lng = new ArrayList<>();
         if (data == null)
             return;
         JSONObject jsonData = new JSONObject(data);
@@ -96,9 +93,10 @@ public class CovidAPI {
                 lng.add(item.getString("longitude"));
                 cases.add(item.getInt("confirmed"));
                 dead.add(item.getInt("dead"));
+                recovered.add(item.getInt("recovered"));
             }
 
-            main.getDataSuccessful(nameCountry, cases, dead, lat, lng);
+            main.getDataSuccessful(nameCountry, cases, dead, recovered, lat, lng);
         }
         else
             return;
