@@ -1,10 +1,6 @@
-package modules;
+package modules.LocationByName;
 
 import android.os.AsyncTask;
-import android.util.Log;
-
-import com.google.android.gms.maps.model.LatLng;
-import com.google.gson.JsonObject;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,12 +10,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
 
 public class GetPlaceFromText {
     private static final String PLACE_URL_API = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=";

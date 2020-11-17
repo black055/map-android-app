@@ -1,4 +1,4 @@
-package modules;
+package modules.FindPath;
 
 import com.google.android.gms.maps.model.LatLng;
 

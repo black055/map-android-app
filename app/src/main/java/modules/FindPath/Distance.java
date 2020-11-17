@@ -1,4 +1,4 @@
-package modules;
+package modules.FindPath;
 
 public class Distance {
     public String text;

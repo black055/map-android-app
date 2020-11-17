@@ -1,4 +1,4 @@
-package modules;
+package modules.NearBySearch;
 
 import android.content.Context;
 import android.os.AsyncTask;

@@ -1,4 +1,4 @@
-package modules;
+package modules.LocationByName;
 
 import com.google.android.gms.maps.model.LatLng;
 

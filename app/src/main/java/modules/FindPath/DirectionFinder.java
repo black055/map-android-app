@@ -1,11 +1,7 @@
-package modules;
+package modules.FindPath;
 
 import android.os.AsyncTask;
-import android.view.View;
-import android.widget.Toast;
 
-import com.example.map_application.MapsActivity;
-import com.example.map_application.R;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
@@ -21,7 +17,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class DirectionFinder {

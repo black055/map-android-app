@@ -1,4 +1,4 @@
-package modules;
+package modules.StoreData;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -7,11 +7,12 @@ import android.database.DatabaseErrorHandler;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
+
+import modules.LocationByName.PlaceObject;
 
 public class DBManager extends SQLiteOpenHelper {
 

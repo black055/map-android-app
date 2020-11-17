@@ -1,9 +1,6 @@
-package modules;
+package modules.Covid;
 
 import android.os.AsyncTask;
-import android.util.Log;
-
-import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
 import org.json.JSONException;

@@ -13,8 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import modules.DBManager;
-import modules.PlaceObject;
+import modules.StoreData.DBManager;
+import modules.LocationByName.PlaceObject;
 
 import static android.R.layout.simple_list_item_2;
 

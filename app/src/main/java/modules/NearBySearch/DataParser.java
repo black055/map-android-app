@@ -1,4 +1,4 @@
-package modules;
+package modules.NearBySearch;
 
 import org.json.JSONArray;
 import org.json.JSONException;

@@ -259,7 +259,6 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="3"
                 android:scrollbars="none"
-                android:background="@drawable/travel_mode_background"
                 android:layout_marginRight="20dp"
                 android:layout_marginLeft="12dp">
 
@@ -275,19 +274,20 @@
                         android:id="@+id/btnDrivingMode"
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
-                        android:layout_marginLeft="4dp"
-                        android:layout_marginRight="30dp"
-                        android:background="@drawable/btn_travelmode_background"
+                        android:layout_marginStart="5dp"
+                        android:layout_marginLeft="5dp"
+                        android:background="@drawable/search_bar_background"
                         android:drawableLeft="@drawable/ic_car"
-                        android:paddingLeft="5dp"
+                        android:paddingLeft="10dp"
                         android:text="Xe" />
 
                     <Button
                         android:id="@+id/btnWalkingMode"
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
-                        android:layout_marginRight="30dp"
-                        android:background="@drawable/btn_travelmode_background"
+                        android:layout_marginStart="7dp"
+                        android:layout_marginLeft="7dp"
+                        android:background="@drawable/search_bar_background"
                         android:drawableLeft="@drawable/ic_baseline_directions_walk_24"
                         android:paddingLeft="5dp"
                         android:text="Đi bộ" />
@@ -296,10 +296,11 @@
                         android:id="@+id/btnTransitMode"
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
-                        android:layout_marginRight="4dp"
-                        android:background="@drawable/btn_travelmode_background"
+                        android:layout_marginStart="7dp"
+                        android:layout_marginLeft="7dp"
+                        android:background="@drawable/search_bar_background"
                         android:drawableLeft="@drawable/ic_baseline_directions_bus_24"
-                        android:paddingLeft="5dp"
+                        android:paddingLeft="10dp"
                         android:text="Bus" />
                 </LinearLayout>
             </HorizontalScrollView>
@@ -308,7 +309,6 @@
                 android:id="@+id/ivSetOriginByCurrentPosition"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_marginRight="12dp"
                 android:layout_weight="1"
                 android:background="@drawable/btn_travelmode_background"
                 android:paddingLeft="15dp"
@@ -387,7 +387,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#FFFFFF"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
