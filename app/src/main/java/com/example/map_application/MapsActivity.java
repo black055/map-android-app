@@ -966,7 +966,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             marker = new MarkerOptions()
                     .position(new LatLng(Double.parseDouble(lat.get(i)), Double.parseDouble(lng.get(i))))
                     .title(nameCountry.get(i))
-                    .icon(BitmapDescriptorFactory.fromBitmap(MapsActivity.createDrawableFromView(this, markerView)));
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_16))
+                    .alpha(0.8f);
             non_text.add(marker);
         }
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), -DEFAULT_MAP_HEIGHT));
