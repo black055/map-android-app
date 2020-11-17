@@ -32,8 +32,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/searchLocation"
         app:srcCompat="@drawable/ic_baseline_map_24"
-        tools:ignore="MissingConstraints,VectorDrawableCompat"
-        tools:visibility="gone" />
+        tools:ignore="MissingConstraints,VectorDrawableCompat" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/map_default"
@@ -48,8 +47,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/map_terrain"
         app:srcCompat="@drawable/type_default"
-        tools:ignore="MissingConstraints,VectorDrawableCompat"
-        tools:visibility="gone" />
+        tools:ignore="MissingConstraints,VectorDrawableCompat" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/map_satellite"
@@ -66,8 +64,7 @@
         app:layout_constraintTop_toBottomOf="@id/floating_button_map_type"
         app:layout_constraintVertical_bias="0.03"
         app:srcCompat="@drawable/type_satellite"
-        tools:ignore="MissingConstraints,VectorDrawableCompat"
-        tools:visibility="gone" />
+        tools:ignore="MissingConstraints,VectorDrawableCompat" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/map_terrain"
@@ -85,8 +82,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/searchLocation"
         app:srcCompat="@drawable/type_terrain"
-        tools:ignore="MissingConstraints,VectorDrawableCompat"
-        tools:visibility="gone" />
+        tools:ignore="MissingConstraints,VectorDrawableCompat" />
 
     <EditText
         android:id="@+id/searchLocation"
@@ -105,8 +101,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:visibility="gone" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnShare"
@@ -298,16 +293,6 @@
                         android:text="Đi bộ" />
 
                     <Button
-                        android:id="@+id/btnBicyclingMode"
-                        android:layout_width="wrap_content"
-                        android:layout_height="40dp"
-                        android:layout_marginRight="30dp"
-                        android:background="@drawable/btn_travelmode_background"
-                        android:drawableLeft="@drawable/ic_baseline_directions_bike_24"
-                        android:paddingLeft="5dp"
-                        android:text="Xe đạp" />
-
-                    <Button
                         android:id="@+id/btnTransitMode"
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
@@ -406,8 +391,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:visibility="gone">
+        app:layout_constraintTop_toTopOf="parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/intro_layout"
@@ -455,7 +439,6 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.044"
-        tools:visibility="gone" />
+        app:layout_constraintVertical_bias="0.044" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

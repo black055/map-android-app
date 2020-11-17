@@ -109,7 +109,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LinearLayout llFindPath;
     private List<Polyline> polylinePaths = new ArrayList<>();
     private Button btnFindPath, btnFindFromCurrent,
-            btnDrivingMode, btnWalkingMode, btnBicyclingMode, btnTransitMode;
+            btnDrivingMode, btnWalkingMode, btnTransitMode;
     private ImageView ivSetOriginByCurrentPosition;
     private PopupMenu popupMenu;
     private boolean isFindingPath;
@@ -204,7 +204,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Chọn phương thức di chuyển
         travelMode = "driving";
         btnDrivingMode = findViewById(R.id.btnDrivingMode);
-        btnBicyclingMode = findViewById(R.id.btnBicyclingMode);
         btnWalkingMode = findViewById(R.id.btnWalkingMode);
         btnTransitMode = findViewById(R.id.btnTransitMode);
         ivSetOriginByCurrentPosition = findViewById(R.id.ivSetOriginByCurrentPosition);
@@ -290,10 +289,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     tvDistance.setText(R.string.init_kilometer);
                     tvDuration.setText(R.string.init_second);
                     isFindingPath = false;
-                    //Xóa marker, polyline
                     travelMode = "driving";
                     btnDrivingMode.performClick();
                     llFindPath.setVisibility(View.INVISIBLE);
+                    searchByVoice.setVisibility(View.VISIBLE);
                     btnSelectType.setTranslationY(0);
                     btnDefault.setTranslationY(0);
                     btnSatellite.setTranslationY(0);
@@ -726,17 +725,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 //Nếu đang là driving thì thoát
                 if (travelMode.equals("driving")) return;
                 travelMode = "driving";
-                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest();
-            }
-        });
-
-        btnBicyclingMode.setOnClickListener(new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
-            @Override
-            public void onClick(View v) {
-                tvDistance.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bike_24, 0, 0,0);
-                if (travelMode.equals("bicycling")) return;
-                travelMode = "bicycling";
                 if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest();
             }
         });
