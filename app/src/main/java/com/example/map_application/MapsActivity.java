@@ -47,6 +47,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -57,6 +58,7 @@ import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import com.karumi.dexter.Dexter;
@@ -85,7 +87,7 @@ import modules.DBManager;
 import modules.CovidAPI;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
-        , DirectionFinderListener, GetPlaceInterface , CovidInterface {
+        , DirectionFinderListener, GetPlaceInterface , CovidInterface, GoogleMap.OnMarkerClickListener {
 
     // Request code for Intent
     private final int RQCODE_FOR_PERMISSION = 1;
@@ -140,6 +142,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     // Coronavirus
     FloatingActionButton btnCorona;
+    boolean isCheckingCorona;
+    private ArrayList<String> nameCountry;
+    private ArrayList<Integer> cases;
+    private ArrayList<Integer> dead;
+    private ArrayList<Integer> recovered;
 
     // Convert a view to bitmap
     public static Bitmap createDrawableFromView(Context context, View view) {
@@ -218,7 +225,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnAddFav = informationLocation.findViewById(R.id.btnAddFav);
 
         layoutIntro = findViewById(R.id.layoutIntro);
+        // Coronavirus
         btnCorona = findViewById(R.id.btnCorona);
+        isCheckingCorona = false;
+        nameCountry = new ArrayList<>();
+        cases = new ArrayList<>();
+        dead = new ArrayList<>();
+        recovered = new ArrayList<>();
 
         // ẩn ban đầu cho một số view
         selectedMaptype = false;
@@ -260,6 +273,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     if (isFindingPath) {
                         searchByVoice.setVisibility(View.VISIBLE);
                     }
+
                     llFindPath.setVisibility(View.GONE);
                     edtOrigin.setText("");
                     edtDestination.setText("");
@@ -276,6 +290,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     //llFindPath.animate().translationY(llFindPath.getHeight());
                     //Hiện thanh tìm kiếm 2 địa điểm
                     llFindPath.setVisibility(View.VISIBLE);
+                    isCheckingCorona = false;
                     //Ẩn thanh search location
                     searchLocation.setVisibility(View.GONE);
                     searchByVoice.setVisibility(View.GONE);
@@ -292,6 +307,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     searchLocation.setVisibility(View.VISIBLE);
                     searchByVoice.setVisibility(View.VISIBLE);
                     llFindPath.setVisibility(View.GONE);
+                    isCheckingCorona = false;
                     edtOrigin.setText("");
                     edtDestination.setText("");
                     tvDistance.setText(R.string.init_kilometer);
@@ -309,12 +325,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     return true;
                 case R.id.favorite:
                     isFindingPath = false;
+                    isCheckingCorona = false;
                     Intent intent_favorite = new Intent(MapsActivity.this, FavoriteActivity.class);
                     startActivityForResult(intent_favorite, RQCODE_FROM_FAVORITE);
                     searchLocation.setText("");
                     return true;
                 case R.id.history:
                     isFindingPath = false;
+                    isCheckingCorona = false;
                     Intent intent_history = new Intent(MapsActivity.this, HistoryActivity.class);
                     startActivityForResult(intent_history, RQCODE_FROM_HISTORY);
                     searchLocation.setText("");
@@ -448,6 +466,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     informationLocation.setVisibility(LinearLayout.GONE);
                 }
                 getCurrentLocation();
+                isCheckingCorona = false;
             }
         });
 
@@ -456,6 +475,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onClick(View v) {
                 List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME
                         , Place.Field.RATING, Place.Field.PHONE_NUMBER, Place.Field.PRICE_LEVEL);
+                isCheckingCorona = false;
                 Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList).build(MapsActivity.this);
                 startActivityForResult(intent, RQCODE_FOR_SEARCH);
             }
@@ -945,8 +965,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
-    public void getDataSuccessful(final ArrayList<String> nameCountry, final ArrayList<Integer> cases, ArrayList<Integer> dead, final ArrayList<String> lat, final ArrayList<String> lng) {
+    public void getDataSuccessful(final ArrayList<String> nameCountry, final ArrayList<Integer> cases
+            , ArrayList<Integer> dead, ArrayList<Integer> recovered, final ArrayList<String> lat, final ArrayList<String> lng) {
 
+        this.nameCountry = nameCountry;
+        this.cases = cases;
+        this.dead = dead;
+        this.recovered = recovered;
+        isCheckingCorona = true;
         mMap.clear();
         final ArrayList<MarkerOptions> non_text = new ArrayList<>();
         final ArrayList<MarkerOptions> with_text = new ArrayList<>();
@@ -981,14 +1007,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onCameraMove() {
                 Log.d("isZooming: ", String.valueOf(isZooming));
                 CameraPosition cameraPosition = mMap.getCameraPosition();
-                if(cameraPosition.zoom >= 6.0 && isZooming) {
+                if(cameraPosition.zoom >= 6.0 && isZooming && isCheckingCorona) {
                     mMap.clear();
                     for (int i = 0; i < with_text.size(); ++i) {
                         mMap.addMarker(with_text.get(i));
                     }
                     isZooming = false;
                 }
-                else if (cameraPosition.zoom < 6.0 && !isZooming) {
+                else if (cameraPosition.zoom < 6.0 && !isZooming && isCheckingCorona) {
                     mMap.clear();
                     for (int i = 0; i < non_text.size(); ++i) {
                         mMap.addMarker(non_text.get(i));
@@ -997,5 +1023,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }
         });
+
+        mMap.setOnMarkerClickListener(this);
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        if(isCheckingCorona) {
+            BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(MapsActivity.this, R.style.BottomSheetDialogTheme);
+            View bottomSheetView = LayoutInflater.from(getApplicationContext()).inflate(R.layout.show_corona_info, null);
+            TextView tvName, tvCases, tvDead, tvRecovered;
+            tvName = bottomSheetView.findViewById(R.id.tvNameCountry);
+            tvCases = bottomSheetView.findViewById(R.id.tvCases);
+            tvDead = bottomSheetView.findViewById(R.id.tvDead);
+            tvRecovered = bottomSheetView.findViewById(R.id.tvRecovered);
+
+            String Name = marker.getTitle();
+            for(int i = 0; i < nameCountry.size(); ++i) {
+                if (Name.equals(nameCountry.get(i))) {
+                    tvName.setText(nameCountry.get(i));
+                    tvCases.setText("Ca nhiễm: " + String.valueOf(cases.get(i)));
+                    tvDead.setText("Ca tử vong: " + String.valueOf(dead.get(i)));
+                    tvRecovered.setText("Hồi phục: " + String.valueOf(recovered.get(i)));
+                    break;
+                }
+            }
+            bottomSheetDialog.setContentView(bottomSheetView);
+            bottomSheetDialog.show();
+            return true;
+        }
+        return false;
     }
 }
