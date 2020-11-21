@@ -102,6 +102,10 @@ public class CovidAPI {
                     buffer.append(line + "\n");
                 }
                 dataCities = buffer.toString();
+
+                isCountries.close();
+                isCities.close();
+                reader.close();
                 return new String[] {dataCountries, dataCities};
 
             } catch (MalformedURLException e) {

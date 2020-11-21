@@ -1,10 +1,12 @@
 package modules.NearBySearch;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.AsyncTask;
 
 import com.example.map_application.R;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -80,6 +82,12 @@ public class NearbyLocationSearch extends AsyncTask<Object, String, String> {
     }
 
     private void showNearbyPlaceOnMap(List<HashMap<String, String>> places) {
+        mMap.addCircle(new CircleOptions()
+                .center(new LatLng(lat, lng)).radius(RADIUS)
+                .strokeWidth(0)
+                .strokeColor(Color.parseColor("#225595EC"))
+                .fillColor(Color.parseColor("#225595EC")));
+
         for (int i = 0; i < places.size(); i++) {
             HashMap<String, String> place = places.get(i);
             String name = place.get("name"), vicinity = place.get("vicinity");

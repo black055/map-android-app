@@ -17,13 +17,20 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -84,7 +91,7 @@ import modules.Covid.CovidAPI;
 import modules.Covid.CovidInterface;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
-        , DirectionFinderListener, GetPlaceInterface, CovidInterface, GoogleMap.OnMarkerClickListener {
+        , DirectionFinderListener, GetPlaceInterface, CovidInterface, GoogleMap.OnMarkerClickListener, SensorEventListener {
 
     // Request code for Intent
     private final int RQCODE_FOR_PERMISSION = 1;
@@ -97,7 +104,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private final int DEFAULT_MAP_HEIGHT = 17;
 
     private GoogleMap mMap;
+    private Marker curLocationMarker;
+    private boolean isRotating;
 
+    private SensorManager sensorManager;
 
     //find path
     private EditText edtOrigin, edtDestination;
@@ -139,7 +149,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     // Search via voice
     private ImageView searchByVoice;
 
-    // Coronavirus
+    // Corona virus
     FloatingActionButton btnCorona;
     boolean isCheckingCorona;
     ArrayList<String> nameCountry;
@@ -188,6 +198,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Tọa độ mặc định của ứng dụng
         defaultLocation = new LatLng(10.8759, 106.7992);
+        curLocationMarker = null;
+        isRotating = false;
 
         // Thêm find path
         llFindPath = findViewById(R.id.llFindPath);
@@ -233,7 +245,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnAddFav = informationLocation.findViewById(R.id.btnAddFav);
 
         layoutIntro = findViewById(R.id.layoutIntro);
-        // Coronavirus
+        // Corona virus
         btnCorona = findViewById(R.id.btnCorona);
         isCheckingCorona = false;
         nameCountry = new ArrayList<>();
@@ -265,6 +277,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnCorona.setVisibility(View.GONE);
         isGoBack = false;
 
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
         setActionListener();
     }
 
@@ -272,9 +286,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onResume() {
         super.onResume();
         if (!isFindingPath) navigation.setSelectedItemId(R.id.home);
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION), SensorManager.SENSOR_DELAY_GAME);
     }
 
-    // TODO: Sử lý các các tính năng tại đây
+    @Override
+    protected void onPause() {
+        super.onPause();
+        sensorManager.unregisterListener(this);
+    }
+
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
         @Override
@@ -282,7 +302,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             switch (item.getItemId()) {
                 case R.id.home:
                     searchLocation.setVisibility(View.VISIBLE);
-                    //searchByVoice.setVisibility(View.VISIBLE);
+
                     if (isGoBack) {
                         informationLocation.setVisibility(View.VISIBLE);
                         isGoBack = false;
@@ -427,14 +447,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     lastLocation = task.getResult();
                     LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
                     mMap.clear();
-                    mMap.addMarker(new MarkerOptions().position(current)
+                    curLocationMarker = mMap.addMarker(new MarkerOptions().position(current)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location)));
 
-                    mMap.addCircle(new CircleOptions()
-                            .center(current).radius(200)
-                            .strokeWidth(0)
-                            .strokeColor(Color.parseColor("#225595EC"))
-                            .fillColor(Color.parseColor("#225595EC")));
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current, DEFAULT_MAP_HEIGHT),
                             new GoogleMap.CancelableCallback() {
                         @Override
@@ -647,19 +662,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @SuppressLint("NonConstantResourceId")
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                //getCurrentLocation();
                 if (lastLocation != null) {
                     String type = "";
                     LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
                     mMap.clear();
-                    mMap.addMarker(new MarkerOptions().position(current)
+                    curLocationMarker = mMap.addMarker(new MarkerOptions().position(current)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location)));
-
-                    mMap.addCircle(new CircleOptions()
-                            .center(current).radius(200)
-                            .strokeWidth(0)
-                            .strokeColor(Color.parseColor("#225595EC"))
-                            .fillColor(Color.parseColor("#225595EC")));
+                    
                     switch (item.getItemId()) {
                         case R.id.menuATM:
                             type = "atm";
@@ -1135,5 +1144,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return true;
         }
         return true;
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (curLocationMarker != null)
+            curLocationMarker.setRotation((float) Math.round(Math.round(event.values[0])));
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 }
