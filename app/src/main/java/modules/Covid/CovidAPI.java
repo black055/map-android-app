@@ -1,6 +1,10 @@
 package modules.Covid;
 
 import android.os.AsyncTask;
+import android.os.Build;
+
+import androidx.annotation.RequiresApi;
+
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -15,48 +19,90 @@ import java.net.URL;
 import java.util.ArrayList;
 
 public class CovidAPI {
-    private final String urlTotal = "https://www.trackcorona.live/api/countries";
-
+    private final String urlCountries = "https://www.trackcorona.live/api/countries";
+    private final String urlCities = "https://www.trackcorona.live/api/cities";
     private ArrayList<String> nameCountry;
-    private ArrayList<Integer> cases;
-    private ArrayList<Integer> dead;
-    private ArrayList<Integer> recovered;
-    private ArrayList<String> lat;
-    private ArrayList<String> lng;
+    private ArrayList<Integer> casesCountry;
+    private ArrayList<Integer> deadCountry;
+    private ArrayList<Integer> recoveredCountry;
+    private ArrayList<String> latCountry;
+    private ArrayList<String> lngCountry;
+
+    private ArrayList<Object> Countries;
+    private ArrayList<Object> Cities;
+
+    private ArrayList<String> nameCity;
+    private ArrayList<Integer> casesCity;
+    private ArrayList<Integer> deadCity;
+    private ArrayList<Integer> recoveredCity;
+    private ArrayList<String> latCity;
+    private ArrayList<String> lngCity;
 
     CovidInterface main;
 
     public CovidAPI(CovidInterface caller) {
         nameCountry = new ArrayList<>();
-        cases = new ArrayList<>();
-        dead = new ArrayList<>();
-        recovered = new ArrayList<>();
-        lat = new ArrayList<>();
-        lng = new ArrayList<>();
+        casesCountry = new ArrayList<>();
+        deadCountry = new ArrayList<>();
+        recoveredCountry = new ArrayList<>();
+        latCountry = new ArrayList<>();
+        lngCountry = new ArrayList<>();
+
+        nameCity = new ArrayList<>();
+        casesCity = new ArrayList<>();
+        deadCity = new ArrayList<>();
+        recoveredCity = new ArrayList<>();
+        latCity = new ArrayList<>();
+        lngCity = new ArrayList<>();
+
         main = caller;
+        Countries = new ArrayList<>();
+        Cities = new ArrayList<>();
     }
 
     public void execute() {
-        new getData().execute(urlTotal);
+        new getData().execute(urlCountries, urlCities);
     }
 
-    private class getData extends AsyncTask<String, Void, String> {
+    private class getData extends AsyncTask<String, Void, String[]> {
 
         @Override
-        protected String doInBackground(String... params) {
-            String link = params[0];
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String[] doInBackground(String... params) {
+            String linkCountries = params[0];
+            String linkCities = params[1];
+
+            String dataCountries;
+            String dataCities;
             try {
-                URL url = new URL(link);
-                InputStream is = url.openConnection().getInputStream();
+
+                URL urlCountries = new URL(linkCountries);
+                InputStream isCountries = urlCountries.openConnection().getInputStream();
+
                 StringBuffer buffer = new StringBuffer();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(isCountries));
 
                 String line;
                 while ((line = reader.readLine()) != null) {
                     buffer.append(line + "\n");
                 }
+                dataCountries = buffer.toString();
 
-                return buffer.toString();
+                URL urlCities = new URL(linkCities);
+                InputStream isCities = urlCities.openConnection().getInputStream();
+
+                buffer = new StringBuffer();
+                reader = new BufferedReader(new InputStreamReader(isCities));
+
+                while ((line = reader.readLine()) != null) {
+                    buffer.append(line + "\n");
+                }
+                dataCities = buffer.toString();
+                return new String[] {dataCountries, dataCities};
 
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -66,36 +112,72 @@ public class CovidAPI {
             return null;
         }
 
+        @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
-        protected void onPostExecute(String res) {
+        protected void onPostExecute(String[] res) {
             try {
-                parseJSon(res);
+                parseJSon(res[0], res[1]);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private void parseJSon(String data) throws JSONException {
-        if (data == null)
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void parseJSon(String dataCountries, String dataCities) throws JSONException {
+        if (dataCountries == null || dataCities == null)
             return;
-        JSONObject jsonData = new JSONObject(data);
-        Integer code = jsonData.getInt("code");
+        JSONObject jsonDataCountries = new JSONObject(dataCountries);
+        int code = jsonDataCountries.getInt("code");
         if (code == 200) {
-            JSONArray statistic = jsonData.getJSONArray("data");
+            JSONArray statistic = jsonDataCountries.getJSONArray("data");
             for (int i = 0; i < statistic.length(); ++i) {
                 JSONObject item = statistic.getJSONObject(i);
                 nameCountry.add(item.getString("location"));
-                lat.add(item.getString("latitude"));
-                lng.add(item.getString("longitude"));
-                cases.add(item.getInt("confirmed"));
-                dead.add(item.getInt("dead"));
-                recovered.add(item.getInt("recovered"));
+                latCountry.add(item.getString("latitude"));
+                lngCountry.add(item.getString("longitude"));
+                casesCountry.add(item.getInt("confirmed"));
+                deadCountry.add(item.getInt("dead"));
+                recoveredCountry.add(item.getInt("recovered"));
             }
-
-            main.getDataSuccessful(nameCountry, cases, dead, recovered, lat, lng);
+            Countries.add(nameCountry);
+            Countries.add(casesCountry);
+            Countries.add(deadCountry);
+            Countries.add(recoveredCountry);
+            Countries.add(latCountry);
+            Countries.add(lngCountry);
         }
-        else
-            return;
+        code = 0;
+
+        JSONObject jsonDataCities = new JSONObject(dataCities);
+        code = jsonDataCities.getInt("code");
+        if (code == 200) {
+            JSONArray statistic = jsonDataCities.getJSONArray("data");
+            for (int i = 0; i < statistic.length(); ++i) {
+                JSONObject item = statistic.getJSONObject(i);
+                nameCity.add(item.getString("location"));
+                latCity.add(item.getString("latitude"));
+                lngCity.add(item.getString("longitude"));
+                casesCity.add(item.getInt("confirmed"));
+
+
+                if (item.get("dead").getClass() == Integer.class) {
+                    deadCity.add(item.getInt("dead"));
+                }
+                else deadCity.add(0);
+
+                if (item.get("recovered").getClass() == Integer.class) {
+                    recoveredCity.add(item.getInt("recovered"));
+                }
+                else recoveredCity.add(0);
+            }
+            Cities.add(nameCity);
+            Cities.add(casesCity);
+            Cities.add(deadCity);
+            Cities.add(recoveredCity);
+            Cities.add(latCity);
+            Cities.add(lngCity);
+        }
+        main.getDataSuccessful(Countries, Cities);
     }
 }
