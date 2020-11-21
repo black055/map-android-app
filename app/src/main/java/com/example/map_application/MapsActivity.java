@@ -77,6 +77,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import modules.FindPath.DirectionFinder;
@@ -105,7 +106,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private Marker curLocationMarker;
-    private boolean isRotating;
 
     private SensorManager sensorManager;
 
@@ -166,6 +166,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     ArrayList<String> latCity;
     ArrayList<String> lngCity;
 
+    // Marker icons array for nearby location search
+    HashMap<String, Integer> markerIcons;
+
     // Convert a view to bitmap
     public static Bitmap createDrawableFromView(Context context, View view) {
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -199,7 +202,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Tọa độ mặc định của ứng dụng
         defaultLocation = new LatLng(10.8759, 106.7992);
         curLocationMarker = null;
-        isRotating = false;
 
         // Thêm find path
         llFindPath = findViewById(R.id.llFindPath);
@@ -278,6 +280,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         isGoBack = false;
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        markerIcons = new HashMap<>();
+        markerIcons.put("atm", R.drawable.atm_marker);
+        markerIcons.put("cafe", R.drawable.cafe_marker);
+        markerIcons.put("gas_station", R.drawable.gas_station_marker);
+        markerIcons.put("gym", R.drawable.fitness_center_marker);
+        markerIcons.put("restaurant", R.drawable.restaurant_marker);
+        markerIcons.put("school", R.drawable.school_marker);
 
         setActionListener();
     }
@@ -690,7 +700,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             break;
                     }
                     NearbyLocationSearch searcher = new NearbyLocationSearch(getApplicationContext(),
-                            lastLocation.getLatitude(), lastLocation.getLongitude(), type);
+                            lastLocation.getLatitude(), lastLocation.getLongitude(), type,
+                            bitmapDescriptorFromVector(MapsActivity.this, markerIcons.get(type)));
                     searcher.execute(mMap);
                     return true;
                 }

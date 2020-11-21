@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 
 import com.example.map_application.R;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -26,15 +27,17 @@ public class NearbyLocationSearch extends AsyncTask<Object, String, String> {
     private Context context;
     private double lat, lng;
     private String type;
+    private BitmapDescriptor markerIcon;
 
     private String googlePlacesData;
     private GoogleMap mMap;
 
-    public NearbyLocationSearch(Context context, double lat, double lng, String type) {
+    public NearbyLocationSearch(Context context, double lat, double lng, String type, BitmapDescriptor markerIcon) {
         this.context = context;
         this.lat = lat;
         this.lng = lng;
         this.type = type;
+        this.markerIcon = markerIcon;
     }
 
     String getURL(double lat, double lng, String type) {
@@ -93,7 +96,9 @@ public class NearbyLocationSearch extends AsyncTask<Object, String, String> {
             String name = place.get("name"), vicinity = place.get("vicinity");
             double lat = Double.parseDouble(place.get("lat")), lng = Double.parseDouble(place.get("lng"));
 
-            mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)).title(name + " : " + vicinity));
+            mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng))
+                                                .title(name + " : " + vicinity)
+                                                .icon(markerIcon));
         }
     }
 }
