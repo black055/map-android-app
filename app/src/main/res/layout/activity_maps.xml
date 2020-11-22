@@ -277,7 +277,7 @@
                         android:layout_marginStart="5dp"
                         android:layout_marginLeft="5dp"
                         android:background="@drawable/search_bar_background"
-                        android:drawableLeft="@drawable/ic_car"
+                        android:drawableLeft="@drawable/ic_car_travelmode_24"
                         android:paddingLeft="10dp"
                         android:text="Xe" />
 

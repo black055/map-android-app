@@ -731,7 +731,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
             @Override
             public void onClick(View v) {
-                tvDistance.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_car, 0, 0,0);
+                tvDistance.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_car_travelmode_clicked, 0, 0,0);
+                btnDrivingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_car_travelmode_clicked, 0, 0, 0);
+                btnWalkingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_walk_24, 0, 0,0);
+                btnTransitMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bus_24, 0, 0,0);
                 //Nếu đang là driving thì thoát
                 if (travelMode.equals("driving")) return;
                 travelMode = "driving";
@@ -743,7 +746,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
             @Override
             public void onClick(View v) {
-                tvDistance.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_walk_24, 0, 0,0);
+                tvDistance.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_walk_24_clicked, 0, 0,0);
+                btnDrivingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_car_travelmode_24, 0, 0, 0);
+                btnWalkingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_walk_24_clicked, 0, 0,0);
+                btnTransitMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bus_24, 0, 0,0);
                 if (travelMode.equals("walking")) return;
                 travelMode = "walking";
                 if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest();
@@ -754,7 +760,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
             @Override
             public void onClick(View v) {
-                tvDistance.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bus_24, 0, 0,0);
+                tvDistance.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bus_24_clicked, 0, 0,0);
+                btnDrivingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_car_travelmode_24, 0, 0, 0);
+                btnWalkingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_walk_24, 0, 0,0);
+                btnTransitMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bus_24_clicked, 0, 0,0);
                 if (travelMode.equals("transit")) return;
                 travelMode = "transit";
                 if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest();
