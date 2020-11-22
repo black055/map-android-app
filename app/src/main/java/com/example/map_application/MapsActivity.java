@@ -95,7 +95,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         , DirectionFinderListener, GetPlaceInterface, CovidInterface, GoogleMap.OnMarkerClickListener, SensorEventListener {
 
     // Request code for Intent
-    private final int RQCODE_FOR_PERMISSION = 1;
     private final int RQCODE_FOR_SEARCH = 2;
     private final int RQCODE_FROM_FAVORITE = 3;
     private final int RQCODE_FROM_HISTORY = 4;
@@ -214,6 +213,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnFindPath = findViewById(R.id.btnFindPath);
         btnFindFromCurrent = findViewById(R.id.btnFindFromCurrent);
         isFindingPath = false;
+
         //Chọn phương thức di chuyển
         travelMode = "driving";
         btnDrivingMode = findViewById(R.id.btnDrivingMode);
@@ -307,6 +307,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
+        @SuppressLint("NonConstantResourceId")
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
@@ -397,6 +398,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         mMap.getUiSettings().setCompassEnabled(false);
         searchByVoice.setVisibility(View.GONE);
+        mMap.getUiSettings().setMapToolbarEnabled(false);
         getCurrentLocation();
     }
 
