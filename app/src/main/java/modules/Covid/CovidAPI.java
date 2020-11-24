@@ -21,22 +21,22 @@ import java.util.ArrayList;
 public class CovidAPI {
     private final String urlCountries = "https://www.trackcorona.live/api/countries";
     private final String urlCities = "https://www.trackcorona.live/api/cities";
-    private ArrayList<String> nameCountry;
-    private ArrayList<Integer> casesCountry;
-    private ArrayList<Integer> deadCountry;
-    private ArrayList<Integer> recoveredCountry;
-    private ArrayList<String> latCountry;
-    private ArrayList<String> lngCountry;
+    private final ArrayList<String> nameCountry;
+    private final ArrayList<Integer> casesCountry;
+    private final ArrayList<Integer> deadCountry;
+    private final ArrayList<Integer> recoveredCountry;
+    private final ArrayList<String> latCountry;
+    private final ArrayList<String> lngCountry;
 
-    private ArrayList<Object> Countries;
-    private ArrayList<Object> Cities;
+    private final ArrayList<Object> Countries;
+    private final ArrayList<Object> Cities;
 
-    private ArrayList<String> nameCity;
-    private ArrayList<Integer> casesCity;
-    private ArrayList<Integer> deadCity;
-    private ArrayList<Integer> recoveredCity;
-    private ArrayList<String> latCity;
-    private ArrayList<String> lngCity;
+    private final ArrayList<String> nameCity;
+    private final ArrayList<Integer> casesCity;
+    private final ArrayList<Integer> deadCity;
+    private final ArrayList<Integer> recoveredCity;
+    private final ArrayList<String> latCity;
+    private final ArrayList<String> lngCity;
 
     CovidInterface main;
 
@@ -88,7 +88,7 @@ public class CovidAPI {
 
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    buffer.append(line + "\n");
+                    buffer.append(line).append("\n");
                 }
                 dataCountries = buffer.toString();
 
@@ -99,7 +99,7 @@ public class CovidAPI {
                 reader = new BufferedReader(new InputStreamReader(isCities));
 
                 while ((line = reader.readLine()) != null) {
-                    buffer.append(line + "\n");
+                    buffer.append(line).append("\n");
                 }
                 dataCities = buffer.toString();
 

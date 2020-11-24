@@ -22,6 +22,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -95,7 +97,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         , DirectionFinderListener, GetPlaceInterface, CovidInterface, GoogleMap.OnMarkerClickListener, SensorEventListener {
 
     // Request code for Intent
-    private final int RQCODE_FOR_PERMISSION = 1;
     private final int RQCODE_FOR_SEARCH = 2;
     private final int RQCODE_FROM_FAVORITE = 3;
     private final int RQCODE_FROM_HISTORY = 4;
@@ -105,6 +106,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private final int DEFAULT_MAP_HEIGHT = 17;
 
     private GoogleMap mMap;
+    ConnectivityManager connectivityManager;
     private Marker curLocationMarker;
 
     private SensorManager sensorManager;
@@ -190,6 +192,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -214,6 +218,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnFindPath = findViewById(R.id.btnFindPath);
         btnFindFromCurrent = findViewById(R.id.btnFindFromCurrent);
         isFindingPath = false;
+
         //Chọn phương thức di chuyển
         travelMode = "driving";
         btnDrivingMode = findViewById(R.id.btnDrivingMode);
@@ -307,6 +312,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
 
+        @SuppressLint("NonConstantResourceId")
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
@@ -397,6 +403,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
         mMap.getUiSettings().setCompassEnabled(false);
         searchByVoice.setVisibility(View.GONE);
+        mMap.getUiSettings().setMapToolbarEnabled(false);
         getCurrentLocation();
     }
 
@@ -699,10 +706,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             type = "school";
                             break;
                     }
-                    NearbyLocationSearch searcher = new NearbyLocationSearch(getApplicationContext(),
-                            lastLocation.getLatitude(), lastLocation.getLongitude(), type,
-                            bitmapDescriptorFromVector(MapsActivity.this, markerIcons.get(type)));
-                    searcher.execute(mMap);
+
+                    connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+                    if(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() != NetworkInfo.State.CONNECTED &&
+                            connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() != NetworkInfo.State.CONNECTED) {
+                        Toast.makeText(MapsActivity.this, "Please turn on the Internet !", Toast.LENGTH_SHORT).show();
+                        return false;
+                    }
+                    else
+                    {
+                        NearbyLocationSearch searcher = new NearbyLocationSearch(getApplicationContext(),
+                                lastLocation.getLatitude(), lastLocation.getLongitude(), type,
+                                bitmapDescriptorFromVector(MapsActivity.this, markerIcons.get(type)));
+                        searcher.execute(mMap);
+                    }
                     return true;
                 }
                 return false;
@@ -722,7 +739,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnCorona.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new CovidAPI(MapsActivity.this).execute();
+
+                connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+                if(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() != NetworkInfo.State.CONNECTED &&
+                        connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() != NetworkInfo.State.CONNECTED) {
+                    Toast.makeText(MapsActivity.this, "Please turn on the Internet !", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    new CovidAPI(MapsActivity.this).execute();
+                }
             }
         });
 
