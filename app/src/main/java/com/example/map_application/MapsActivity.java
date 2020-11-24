@@ -735,6 +735,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 btnDrivingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_car_travelmode_clicked, 0, 0, 0);
                 btnWalkingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_walk_24, 0, 0,0);
                 btnTransitMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bus_24, 0, 0,0);
+                btnDrivingMode.setTextColor(Color.parseColor("#5595EC"));
+                btnWalkingMode.setTextColor(Color.parseColor("#8a000000"));
+                btnTransitMode.setTextColor(Color.parseColor("#8a000000"));
+
                 //Nếu đang là driving thì thoát
                 if (travelMode.equals("driving")) return;
                 travelMode = "driving";
@@ -750,6 +754,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 btnDrivingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_car_travelmode_24, 0, 0, 0);
                 btnWalkingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_walk_24_clicked, 0, 0,0);
                 btnTransitMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bus_24, 0, 0,0);
+                btnDrivingMode.setTextColor(Color.parseColor("#8a000000"));
+                btnWalkingMode.setTextColor(Color.parseColor("#5595EC"));
+                btnTransitMode.setTextColor(Color.parseColor("#8a000000"));
+
                 if (travelMode.equals("walking")) return;
                 travelMode = "walking";
                 if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest();
@@ -764,6 +772,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 btnDrivingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_car_travelmode_24, 0, 0, 0);
                 btnWalkingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_walk_24, 0, 0,0);
                 btnTransitMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bus_24_clicked, 0, 0,0);
+                btnDrivingMode.setTextColor(Color.parseColor("#8a000000"));
+                btnWalkingMode.setTextColor(Color.parseColor("#8a000000"));
+                btnTransitMode.setTextColor(Color.parseColor("#5595EC"));
+
                 if (travelMode.equals("transit")) return;
                 travelMode = "transit";
                 if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest();
