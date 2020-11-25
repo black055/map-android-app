@@ -10,6 +10,7 @@ import androidx.fragment.app.FragmentActivity;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -30,6 +31,7 @@ import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -150,6 +152,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     // Corona virus
     FloatingActionButton btnCorona;
     boolean isCheckingCorona;
+    ProgressDialog progressDialog;
     ArrayList<String> nameCountry;
     ArrayList<Integer> casesCountry;
     ArrayList<Integer> deadCountry;
@@ -745,6 +748,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 else
                 {
+                    progressDialog = new ProgressDialog(MapsActivity.this);
+                    progressDialog.show();
+                    progressDialog.setContentView(R.layout.progress_dialog);
+                    getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
                     new CovidAPI(MapsActivity.this).execute();
                 }
             }
@@ -1124,6 +1132,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             forCities.add(marker);
         }
+
+        progressDialog.dismiss();
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
 
         final boolean finalIsInit = isInit;
         mMap.setOnCameraMoveListener(new GoogleMap.OnCameraMoveListener() {
