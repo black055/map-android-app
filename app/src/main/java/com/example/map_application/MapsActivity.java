@@ -14,6 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -465,7 +466,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
                     mMap.clear();
                     curLocationMarker = mMap.addMarker(new MarkerOptions().position(current)
-                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location)));
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
+                            .anchor(0.5f, 0.5f));
 
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current, DEFAULT_MAP_HEIGHT),
                             new GoogleMap.CancelableCallback() {
@@ -684,7 +686,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
                     mMap.clear();
                     curLocationMarker = mMap.addMarker(new MarkerOptions().position(current)
-                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location)));
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
+                            .anchor(0.5f, 0.5f));
                     
                     switch (item.getItemId()) {
                         case R.id.menuATM:
@@ -1206,8 +1209,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (curLocationMarker != null)
-            curLocationMarker.setRotation((float) Math.round(Math.round(event.values[0])));
+        if (curLocationMarker != null && mMap.getCameraPosition() != null) {
+            if (event.values[0] >= mMap.getCameraPosition().bearing)
+                curLocationMarker.setRotation(event.values[0] - mMap.getCameraPosition().bearing);
+            else curLocationMarker.setRotation(360.0f + event.values[0] - mMap.getCameraPosition().bearing);
+        }
     }
 
     @Override
