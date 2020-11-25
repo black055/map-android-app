@@ -14,7 +14,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -27,13 +26,10 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.SystemClock;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -52,7 +48,6 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -512,7 +507,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME
                         , Place.Field.RATING, Place.Field.PHONE_NUMBER, Place.Field.PRICE_LEVEL);
                 isCheckingCorona = false;
-                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList)
+                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fieldList)
                         .build(MapsActivity.this);
                 startActivityForResult(intent, RQCODE_FOR_SEARCH);
             }
@@ -568,7 +563,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onClick(View v) {
                 List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME
                         , Place.Field.RATING, Place.Field.PHONE_NUMBER, Place.Field.PRICE_LEVEL);
-                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList)
+                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fieldList)
                         .build(MapsActivity.this);
                 startActivityForResult(intent, RQCODE_FOR_FINDORI);
             }
@@ -579,7 +574,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onClick(View v) {
                 List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS, Place.Field.LAT_LNG, Place.Field.NAME
                         , Place.Field.RATING, Place.Field.PHONE_NUMBER, Place.Field.PRICE_LEVEL);
-                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList)
+                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fieldList)
                         .build(MapsActivity.this);
                 startActivityForResult(intent, RQCODE_FOR_FINDDES);
             }
@@ -764,7 +759,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 btnDrivingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_car_travelmode_clicked, 0, 0, 0);
                 btnWalkingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_walk_24, 0, 0,0);
                 btnTransitMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bus_24, 0, 0,0);
-                btnDrivingMode.setTextColor(Color.parseColor("#5595EC"));
+                btnDrivingMode.setTextColor(Color.parseColor("#FF6D00"));
                 btnWalkingMode.setTextColor(Color.parseColor("#8a000000"));
                 btnTransitMode.setTextColor(Color.parseColor("#8a000000"));
 
@@ -784,7 +779,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 btnWalkingMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_walk_24_clicked, 0, 0,0);
                 btnTransitMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bus_24, 0, 0,0);
                 btnDrivingMode.setTextColor(Color.parseColor("#8a000000"));
-                btnWalkingMode.setTextColor(Color.parseColor("#5595EC"));
+                btnWalkingMode.setTextColor(Color.parseColor("#FF6D00"));
                 btnTransitMode.setTextColor(Color.parseColor("#8a000000"));
 
                 if (travelMode.equals("walking")) return;
@@ -803,7 +798,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 btnTransitMode.setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_baseline_directions_bus_24_clicked, 0, 0,0);
                 btnDrivingMode.setTextColor(Color.parseColor("#8a000000"));
                 btnWalkingMode.setTextColor(Color.parseColor("#8a000000"));
-                btnTransitMode.setTextColor(Color.parseColor("#5595EC"));
+                btnTransitMode.setTextColor(Color.parseColor("#FF6D00"));
 
                 if (travelMode.equals("transit")) return;
                 travelMode = "transit";

@@ -136,8 +136,8 @@
 
     <ImageView
         android:id="@+id/btnCurLocation"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         android:layout_marginBottom="36dp"
         android:background="@drawable/current_location_background"
         android:src="@drawable/ic_baseline_gps_fixed_24"
@@ -396,7 +396,8 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/intro_layout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:visibility="visible">
 
             <ImageView
                 android:id="@+id/imageView3"
@@ -431,7 +432,7 @@
         android:layout_width="35dp"
         android:layout_height="35dp"
         android:layout_marginBottom="200dp"
-        android:background="@drawable/current_location_background"
+        android:background="@drawable/search_voice_background"
         android:src="@drawable/ic_baseline_mic_24"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
