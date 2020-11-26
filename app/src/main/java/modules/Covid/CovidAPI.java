@@ -27,6 +27,7 @@ public class CovidAPI {
     private final ArrayList<Integer> recoveredCountry;
     private final ArrayList<String> latCountry;
     private final ArrayList<String> lngCountry;
+    private final ArrayList<String> countryCode;
 
     private final ArrayList<Object> Countries;
     private final ArrayList<Object> Cities;
@@ -37,6 +38,7 @@ public class CovidAPI {
     private final ArrayList<Integer> recoveredCity;
     private final ArrayList<String> latCity;
     private final ArrayList<String> lngCity;
+    private final ArrayList<String> code_country;
 
     CovidInterface main;
 
@@ -47,6 +49,7 @@ public class CovidAPI {
         recoveredCountry = new ArrayList<>();
         latCountry = new ArrayList<>();
         lngCountry = new ArrayList<>();
+        countryCode = new ArrayList<>();
 
         nameCity = new ArrayList<>();
         casesCity = new ArrayList<>();
@@ -54,6 +57,7 @@ public class CovidAPI {
         recoveredCity = new ArrayList<>();
         latCity = new ArrayList<>();
         lngCity = new ArrayList<>();
+        code_country = new ArrayList<>();
 
         main = caller;
         Countries = new ArrayList<>();
@@ -143,6 +147,7 @@ public class CovidAPI {
                 casesCountry.add(item.getInt("confirmed"));
                 deadCountry.add(item.getInt("dead"));
                 recoveredCountry.add(item.getInt("recovered"));
+                countryCode.add(item.getString("country_code"));
             }
             Countries.add(nameCountry);
             Countries.add(casesCountry);
@@ -150,6 +155,7 @@ public class CovidAPI {
             Countries.add(recoveredCountry);
             Countries.add(latCountry);
             Countries.add(lngCountry);
+            Countries.add(countryCode);
         }
         code = 0;
 
@@ -163,6 +169,7 @@ public class CovidAPI {
                 latCity.add(item.getString("latitude"));
                 lngCity.add(item.getString("longitude"));
                 casesCity.add(item.getInt("confirmed"));
+                code_country.add(item.getString("country_code"));
 
 
                 if (item.get("dead").getClass() == Integer.class) {
@@ -181,6 +188,7 @@ public class CovidAPI {
             Cities.add(recoveredCity);
             Cities.add(latCity);
             Cities.add(lngCity);
+            Cities.add(code_country);
         }
         main.getDataSuccessful(Countries, Cities);
     }

@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -27,17 +28,25 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.ArrayMap;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Adapter;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.RelativeLayout;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -65,6 +74,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -79,6 +89,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import modules.FindPath.DirectionFinder;
 import modules.FindPath.DirectionFinderListener;
@@ -90,6 +101,8 @@ import modules.NearBySearch.NearbyLocationSearch;
 import modules.StoreData.DBManager;
 import modules.Covid.CovidAPI;
 import modules.Covid.CovidInterface;
+
+import static android.R.layout.simple_list_item_2;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         , DirectionFinderListener, GetPlaceInterface, CovidInterface, GoogleMap.OnMarkerClickListener, SensorEventListener {
@@ -166,6 +179,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     ArrayList<Integer> recoveredCity;
     ArrayList<String> latCity;
     ArrayList<String> lngCity;
+    HashMap<String, ArrayList<Object>> hashByCountryCode;
+    ArrayList<String> countryCode;
 
     // Marker icons array for nearby location search
     HashMap<String, Integer> markerIcons;
@@ -267,6 +282,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         recoveredCity = new ArrayList<>();
         latCity = new ArrayList<>();
         lngCity = new ArrayList<>();
+        hashByCountryCode = new HashMap<>();
+        ArrayList<String> countryCode = new ArrayList<>();
 
         // ẩn ban đầu cho một số view
         selectedMaptype = false;
@@ -1080,6 +1097,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         recoveredCountry = (ArrayList<Integer>) Countries.get(3);
         latCountry = (ArrayList<String>) Countries.get(4);
         lngCountry = (ArrayList<String>) Countries.get(5);
+        countryCode = (ArrayList<String>) Countries.get(6);
+        Log.d("Hash", String.valueOf(countryCode));
         isCheckingCorona = true;
         mMap.clear();
         final ArrayList<MarkerOptions> non_text = new ArrayList<>();
@@ -1088,6 +1107,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         View markerView = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.covid_area_marker, null);
         CircularTextView numTxt = markerView.findViewById(R.id.circularTextView);
         MarkerOptions marker;
+        Log.d("Marker", "Create Countries markers");
         for (int i = 0; i < nameCountry.size(); ++i) {
             numTxt.setText(String.valueOf(casesCountry.get(i)));
             marker = new MarkerOptions()
@@ -1109,29 +1129,61 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         boolean isInit = true;
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), -DEFAULT_MAP_HEIGHT));
         mMap.clear();
+        Log.d("Marker", "Add marker");
         for(int i = 0; i < non_text.size(); ++i) {
             mMap.addMarker(non_text.get(i));
         }
         isInit = false;
 
+        hashByCountryCode = new HashMap<>();
         nameCity = (ArrayList<String>) Cities.get(0);
         casesCity = (ArrayList<Integer>) Cities.get(1);
         deadCity = (ArrayList<Integer>) Cities.get(2);
         recoveredCity = (ArrayList<Integer>) Cities.get(3);
         latCity = (ArrayList<String>) Cities.get(4);
         lngCity = (ArrayList<String>) Cities.get(5);
+        ArrayList<String> code_country = (ArrayList<String>) Cities.get(6);
 
         final ArrayList<MarkerOptions> forCities = new ArrayList<>();
 
-        for (int i = 0; i < nameCity.size(); ++i) {
-            numTxt.setText(String.valueOf(casesCity.get(i)));
-            marker = new MarkerOptions()
-                    .position(new LatLng(Double.parseDouble(latCity.get(i)), Double.parseDouble(lngCity.get(i))))
-                    .title(nameCity.get(i))
-                    .icon(BitmapDescriptorFactory.fromBitmap(MapsActivity.createDrawableFromView(this, markerView)));
+        Log.d("Marker", "Create Cities markers");
+        for (int i = 0; i < countryCode.size(); ++i) {
+            String code = countryCode.get(i);
+            ArrayList<Object> temp = hashByCountryCode.get(code);
+            if (temp != null) {
+                for(int j = 0; j < nameCity.size(); ++j) {
+                    if (code_country.get(j).equals(code)) {
+                        ((ArrayList<String>) (hashByCountryCode.get(code)).get(0)).add(nameCity.get(j));
+                        ((ArrayList<Integer>) (hashByCountryCode.get(code)).get(1)).add(casesCity.get(j));
+                        ((ArrayList<Integer>) (hashByCountryCode.get(code)).get(2)).add(deadCity.get(j));
+                        ((ArrayList<Integer>) (hashByCountryCode.get(code)).get(3)).add(recoveredCity.get(j));
+                    }
+                }
+            }
+            else {
+                ArrayList<Object> arr = new ArrayList<>();
+                ArrayList<String> name = new ArrayList<>();
+                ArrayList<Integer> cases = new ArrayList<>();
+                ArrayList<Integer> dead = new ArrayList<>();
+                ArrayList<Integer> recovered = new ArrayList<>();
+                for(int j = 0; j < nameCity.size(); ++j) {
+                    if (code_country.get(j).equals(code)) {
+                        name.add(nameCity.get(j));
+                        cases.add(casesCity.get(j));
+                        dead.add(deadCity.get(j));
+                        recovered.add(recoveredCity.get(j));
+                    }
+                }
 
-            forCities.add(marker);
+                arr.add(name.clone());
+                arr.add(cases.clone());
+                arr.add(dead.clone());
+                arr.add(recovered.clone());
+                hashByCountryCode.put(code, (ArrayList<Object>) arr.clone());
+            }
+            Log.d("Hash", String.valueOf(hashByCountryCode.get(code)));
         }
+        Log.d("Marker", "Complete markers all");
 
         progressDialog.dismiss();
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
@@ -1157,13 +1209,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         }
                         changeType = true;
                     }
-                    else if (cameraPosition.zoom >= 6 && !changeType && isCheckingCorona) {
-                        mMap.clear();
-                        for (int i = 0; i < forCities.size(); ++i) {
-                            mMap.addMarker(forCities.get(i));
-                        }
-                        changeType = true;
-                    }
                 }
             }
         });
@@ -1181,29 +1226,41 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             tvCases = bottomSheetView.findViewById(R.id.tvCases);
             tvDead = bottomSheetView.findViewById(R.id.tvDead);
             tvRecovered = bottomSheetView.findViewById(R.id.tvRecovered);
-
+            ListView list_city = bottomSheetView.findViewById(R.id.list_city);
+            list_city.setVisibility(View.VISIBLE);
             String Name = marker.getTitle();
-            boolean isFound = false;
             for(int i = 0; i < nameCountry.size(); ++i) {
                 if (Name.equals(nameCountry.get(i))) {
                     tvName.setText(nameCountry.get(i));
                     tvCases.setText("Ca nhiễm: " + casesCountry.get(i));
-                    tvDead.setText("Ca tử vong: " + deadCountry.get(i));
+                    tvDead.setText("Tử vong: " + deadCountry.get(i));
                     tvRecovered.setText("Hồi phục: " + recoveredCountry.get(i));
-                    isFound = true;
-                    break;
-                }
-            }
-            if (!isFound) {
-                for(int i = 0; i < nameCity.size(); ++i) {
-                    if (Name.equals(nameCity.get(i))) {
-                        tvName.setText(nameCity.get(i));
-                        tvCases.setText("Ca nhiễm: " + casesCity.get(i));
-                        tvDead.setText("Ca tử vong: " + deadCity.get(i));
-                        tvRecovered.setText("Hồi phục: " + recoveredCity.get(i));
-                        isFound = true;
+                    String code = countryCode.get(i);
+                    ArrayList<Object> info = hashByCountryCode.get(code);
+                    Object[] nameObj = (Object[]) ((ArrayList<String>) info.get(0)).toArray();
+                    if (nameObj.length == 0) {
+                        list_city.setVisibility(View.GONE);
                         break;
                     }
+                    Object[] casesObj = (Object[]) ((ArrayList<Integer>) info.get(1)).toArray();
+                    Object[] deadObj = (Object[]) ((ArrayList<Integer>) info.get(2)).toArray();
+                    Object[] recoveredObj = (Object[]) ((ArrayList<Integer>) info.get(3)).toArray();
+
+                    String[] name = Arrays.copyOf(nameObj, nameObj.length, String[].class);
+                    Integer[] cases = Arrays.copyOf(casesObj, casesObj.length, Integer[].class);
+                    Integer[] dead = Arrays.copyOf(deadObj, deadObj.length, Integer[].class);
+                    Integer[] recovered = Arrays.copyOf(recoveredObj, recoveredObj.length, Integer[].class);
+
+                    List<Map<String, String>> list_item = new ArrayList<>();
+                    for (int j = 0; j < name.length; ++j) {
+                        Map<String, String> item = new HashMap<>();
+                        item.put("name", name[j]);
+                        item.put("info", "Ca nhiễm: " + cases[j] + " , Tử vong: " + dead[j] + " , Phục hồi: " + recovered[j]);
+                        list_item.add(item);
+                    }
+                    list_city.setAdapter(new SimpleAdapter(this, list_item, simple_list_item_2,
+                            new String[] {"name", "info"}, new int[] {android.R.id.text1, android.R.id.text2}));
+                    break;
                 }
             }
             bottomSheetDialog.setContentView(bottomSheetView);
