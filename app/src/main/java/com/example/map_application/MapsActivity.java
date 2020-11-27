@@ -246,7 +246,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         popupMenu = new PopupMenu(MapsActivity.this, navigation);
         popupMenu.getMenuInflater().inflate(R.menu.places_picker_menu, popupMenu.getMenu());
-        //popupMenu.setForceShowIcon(true);
+        popupMenu.setForceShowIcon(true);
 
         // Component để hiển thị lựa chọn kiểu bản đồ
         btnSelectType = findViewById(R.id.floating_button_map_type);
