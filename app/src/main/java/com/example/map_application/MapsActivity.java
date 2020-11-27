@@ -233,7 +233,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         popupMenu = new PopupMenu(MapsActivity.this, navigation);
         popupMenu.getMenuInflater().inflate(R.menu.places_picker_menu, popupMenu.getMenu());
-        popupMenu.setForceShowIcon(true);
+        //popupMenu.setForceShowIcon(true);
 
         // Component để hiển thị lựa chọn kiểu bản đồ
         btnSelectType = findViewById(R.id.floating_button_map_type);
@@ -850,40 +850,54 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Cấp phát cho polyline (tập hợp các điểm trên đường đi)
         polylinePaths = new ArrayList<>();
 
-        // Không tìm được routes từ google cấp
+        // Không tìm được routes từ google api cấp
         if (routes.size() == 0) return;
 
-        for (Route route : routes) {
-            //Xóa các marker trên bản đồ
-            mMap.clear();
-            //Chuyển camera tới vị trí bắt đầu
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(route.startLocation, DEFAULT_MAP_HEIGHT));
+        //Xóa các marker trên bản đồ
+        mMap.clear();
+        //Chuyển camera tới vị trí bắt đầu
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(routes.get(0).startLocation, 15));
 
-            //Ghi thời gian, khoảng cách vào 2 ô textview duration, distance
-            tvDuration.setText(route.duration.text);
-            tvDistance.setText(route.distance.text);
+        //Lấy route trong mảng
+        Route route = routes.get(0);
+        //Ghi thời gian, khoảng cách vào 2 ô textview duration, distance
+        tvDuration.setText(route.duration.text);
+        tvDistance.setText(route.distance.text);
 
-            //add marker điểm đầu, điểm cuối lên mMap
-            mMap.addMarker(new MarkerOptions()
-                    .icon(bitmapDescriptorFromVector(MapsActivity.this, R.drawable.ic_position_start))
-                    .title(route.startAddress)
-                    .position(route.startLocation));
-            mMap.addMarker(new MarkerOptions()
-                    .title(route.endAddress)
-                    .position(route.endLocation));
+        //add marker điểm đầu, điểm cuối lên mMap
+        mMap.addMarker(new MarkerOptions()
+                .icon(bitmapDescriptorFromVector(MapsActivity.this, R.drawable.ic_position_start))
+                .title(route.startAddress)
+                .position(route.startLocation));
+        mMap.addMarker(new MarkerOptions()
+                .title(route.endAddress)
+                .position(route.endLocation));
 
-            //Tạo 1 polyline
-            PolylineOptions polylineOptions = new PolylineOptions().
+        //Xử lý nếu có tuyến phụ
+        if (routes.size() > 1) {
+            Route subRoute = routes.get(1);
+            //Vẽ các tuyến phụ
+            PolylineOptions subPolylineOptions = new PolylineOptions().
                     geodesic(true).
-                    color(ContextCompat.getColor(getApplicationContext(), R.color.colorRoadRoute)).
+                    color(ContextCompat.getColor(getApplicationContext(), R.color.subRoute)).
                     width(15);
-
-            //Thêm các điểm vào polylineOptions
-            for (int i = 0; i < route.points.size(); i++)
-                polylineOptions.add(route.points.get(i));
+            //Thêm các điểm vào subPolylineOptions
+            for (int i = 0; i < subRoute.points.size(); i++)
+                subPolylineOptions.add(subRoute.points.get(i));
             //vẽ đường đi giữa 2 điểm
-            polylinePaths.add(mMap.addPolyline(polylineOptions));
+            polylinePaths.add(mMap.addPolyline(subPolylineOptions));
         }
+        
+        //Tạo polyline để vẽ tuyến chính
+        PolylineOptions polylineOptions = new PolylineOptions().
+                geodesic(true).
+                color(ContextCompat.getColor(getApplicationContext(), R.color.colorRoadRoute)).
+                width(15);
+        //Thêm các điểm vào polylineOptions
+        for (int i = 0; i < route.points.size(); i++)
+            polylineOptions.add(route.points.get(i));
+        //vẽ đường đi giữa 2 điểm
+        polylinePaths.add(mMap.addPolyline(polylineOptions));
     }
 
     private void sendRequest() {

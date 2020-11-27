@@ -46,6 +46,7 @@ public class DirectionFinder {
         return DIRECTION_URL_API + "origin=" + urlOrigin
                 + "&destination=" + urlDestination
                 + "&mode=" + travelMode
+                + "&alternatives=true"
                 + "&key=" + GOOGLE_API_KEY;
     }
 
