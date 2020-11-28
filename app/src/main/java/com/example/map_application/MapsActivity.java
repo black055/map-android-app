@@ -97,7 +97,8 @@ import modules.Covid.CovidInterface;
 import static android.R.layout.simple_list_item_2;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
-        , DirectionFinderListener, GetPlaceInterface, CovidInterface, GoogleMap.OnMarkerClickListener, SensorEventListener {
+        , DirectionFinderListener, GetPlaceInterface, CovidInterface, GoogleMap.OnMarkerClickListener, SensorEventListener
+        , GoogleMap.OnPolylineClickListener {
 
     // Request code for Intent
     private final int RQCODE_FOR_SEARCH = 2;
@@ -124,6 +125,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ImageView ivSetOriginByCurrentPosition;
     private Button btnFindPath, btnFindFromCurrent,
             btnDrivingMode, btnWalkingMode, btnTransitMode;
+    private boolean routeType;
 
     private PopupMenu popupMenu;
 
@@ -226,6 +228,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnFindPath = findViewById(R.id.btnFindPath);
         btnFindFromCurrent = findViewById(R.id.btnFindFromCurrent);
         isFindingPath = false;
+        //route type mặc định là false, nghĩa là tuyến đang chọn là tuyến ngắn nhất
+        //nếu = 1 thì tuyến chọn là tuyến dài hơn
+        routeType = false;
 
         //Chọn phương thức di chuyển
         travelMode = "driving";
@@ -240,7 +245,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         popupMenu = new PopupMenu(MapsActivity.this, navigation);
         popupMenu.getMenuInflater().inflate(R.menu.places_picker_menu, popupMenu.getMenu());
-        popupMenu.setForceShowIcon(true);
+        //popupMenu.setForceShowIcon(true);
 
         // Component để hiển thị lựa chọn kiểu bản đồ
         btnSelectType = findViewById(R.id.floating_button_map_type);
@@ -436,6 +441,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         searchByVoice.setVisibility(View.GONE);
         mMap.getUiSettings().setMapToolbarEnabled(false);
         getCurrentLocation();
+        mMap.setOnPolylineClickListener(this);
     }
 
     // Chuyển màn hình đến vị trí hiện tại của thiết bị
@@ -659,7 +665,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnFindPath.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                sendRequest();
+                routeType = false;
+                sendRequest(false);
             }
         });
 
@@ -683,7 +690,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                             String origin = "" + lastLocation.getLatitude() + "," + lastLocation.getLongitude();
                                             String destination = searchLocation.getText().toString();
                                             try {
-                                                new DirectionFinder(MapsActivity.this, origin, destination, travelMode).execute();
+                                                new DirectionFinder(MapsActivity.this, origin, destination, travelMode, false).execute();
                                                 informationLocation.setVisibility(View.GONE);
                                             } catch (UnsupportedEncodingException e) {
                                                 e.printStackTrace();
@@ -806,7 +813,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 //Nếu đang là driving thì thoát
                 if (travelMode.equals("driving")) return;
                 travelMode = "driving";
-                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest();
+                routeType = false;
+                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest(false);
             }
         });
 
@@ -824,7 +832,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 if (travelMode.equals("walking")) return;
                 travelMode = "walking";
-                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest();
+                routeType = false;
+                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest(false);
             }
         });
 
@@ -842,7 +851,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 if (travelMode.equals("transit")) return;
                 travelMode = "transit";
-                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest();
+                routeType = false;
+                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest(false);
             }
         });
 
@@ -881,7 +891,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     @Override
-    public void onDirectionFinderSuccess(List<Route> routes) {
+    public void onDirectionFinderSuccess(List<Route> routes, boolean isFindingSubRoute) {
         //Cấp phát cho polyline (tập hợp các điểm trên đường đi)
         polylinePaths = new ArrayList<>();
 
@@ -893,9 +903,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Chuyển camera tới vị trí bắt đầu
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(routes.get(0).startLocation, 15));
 
-        //Lấy route trong mảng
-        Route route = routes.get(0);
-        //Ghi thời gian, khoảng cách vào 2 ô textview duration, distance
+        //Lấy route chính và phụ trong mảng
+        //Đường ngắn nhất là đường chính là route 0 trong routes. Đường phụ dài hơn là route 1
+        Route route = !isFindingSubRoute ? routes.get(0) : routes.get(1);
+        Route subRoute = isFindingSubRoute ? routes.get(0) : routes.get(1);
+
+        //Ghi thời gian, khoảng cách vào 2 ô textView duration, distance
         tvDuration.setText(route.duration.text);
         tvDistance.setText(route.distance.text);
 
@@ -910,10 +923,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //Xử lý nếu có tuyến phụ
         if (routes.size() > 1) {
-            Route subRoute = routes.get(1);
             //Vẽ các tuyến phụ
             PolylineOptions subPolylineOptions = new PolylineOptions().
                     geodesic(true).
+                    clickable(true).
                     color(ContextCompat.getColor(getApplicationContext(), R.color.subRoute)).
                     width(15);
             //Thêm các điểm vào subPolylineOptions
@@ -926,8 +939,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Tạo polyline để vẽ tuyến chính
         PolylineOptions polylineOptions = new PolylineOptions().
                 geodesic(true).
+                clickable(true).
                 color(ContextCompat.getColor(getApplicationContext(), R.color.colorRoadRoute)).
                 width(15);
+
         //Thêm các điểm vào polylineOptions
         for (int i = 0; i < route.points.size(); i++)
             polylineOptions.add(route.points.get(i));
@@ -935,7 +950,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         polylinePaths.add(mMap.addPolyline(polylineOptions));
     }
 
-    private void sendRequest() {
+    private void sendRequest(boolean subRoute) {
         String origin = edtOrigin.getText().toString();
         String destination = edtDestination.getText().toString();
         if (origin.isEmpty()) {
@@ -949,7 +964,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         try {
             // Tìm đường dựa vào address điểm đầu, cuối
-            new DirectionFinder(this, origin, destination, travelMode).execute();
+            new DirectionFinder(this, origin, destination, travelMode, subRoute).execute();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -1314,5 +1329,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
+    }
+
+    @Override
+    public void onPolylineClick(Polyline polyline) {
+        //Kiểm tra có phải "tuyến phụ"
+        if (polyline.getColor() == ContextCompat.getColor(getApplicationContext(), R.color.subRoute)) {
+            //Nếu tuyến đang chọn là tuyến dài hơn thì đổi tuyến user chọn sang tuyến ngắn hơn
+            if (routeType) {
+                routeType = false;
+                sendRequest(false);
+            }
+            else {
+                //Tuyến chọn hiện tại là tuyến ngắn hơn. User cần đổi sang tuyến dài hơn
+                routeType = true;
+                sendRequest(true);
+            }
+        }
     }
 }

@@ -26,12 +26,14 @@ public class DirectionFinder {
     private String origin;
     private String destination;
     private String travelMode;
+    private boolean isFindingSubRoute;
 
-    public DirectionFinder(DirectionFinderListener listener, String origin, String destination, String travelMode) {
+    public DirectionFinder(DirectionFinderListener listener, String origin, String destination, String travelMode, boolean subRoute) {
         this.listener = listener;
         this.origin = origin;
         this.destination = destination;
         this.travelMode = travelMode == null ? "driving" : travelMode;
+        this.isFindingSubRoute = subRoute;
     }
 
     public void execute() throws UnsupportedEncodingException {
@@ -116,7 +118,7 @@ public class DirectionFinder {
             routes.add(route);
         }
 
-        listener.onDirectionFinderSuccess(routes);
+        listener.onDirectionFinderSuccess(routes, isFindingSubRoute);
     }
 
 
