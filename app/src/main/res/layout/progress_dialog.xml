@@ -15,11 +15,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:theme="@style/progressBarOrange"/>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Đang tải dữ liệu Covid-19 ..."
-            android:textSize="20dp"
-            android:layout_marginTop="20dp" />
+            android:layout_marginTop="20dp"
+            android:text="Đang tải ..."
+            android:textSize="20dp" />
     </LinearLayout>
 </RelativeLayout>

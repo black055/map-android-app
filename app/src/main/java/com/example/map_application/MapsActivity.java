@@ -6,7 +6,6 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
-import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -28,17 +27,11 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.ArrayMap;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.Adapter;
-import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -74,7 +67,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -122,57 +114,59 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private SensorManager sensorManager;
 
-    //find path
+    // Component cho chức năng tìm đường đi giữa 2 địa điểm
     private EditText edtOrigin, edtDestination;
     private TextView tvDuration, tvDistance;
     private LinearLayout llFindPath;
     private List<Polyline> polylinePaths = new ArrayList<>();
-    private Button btnFindPath, btnFindFromCurrent,
-            btnDrivingMode, btnWalkingMode, btnTransitMode;
-    private ImageView ivSetOriginByCurrentPosition;
-    private PopupMenu popupMenu;
     private boolean isFindingPath;
     private String travelMode;
-    //---------
-    private Location lastLocation;
-    private LatLng defaultLocation;
-    private EditText searchLocation;
-    private ImageView btnCurLocation;
-    private FloatingActionButton btnShare;
+    private ImageView ivSetOriginByCurrentPosition;
+    private Button btnFindPath, btnFindFromCurrent,
+            btnDrivingMode, btnWalkingMode, btnTransitMode;
 
-    // MapType Option
+    private PopupMenu popupMenu;
+
+    private Location lastLocation;  // Vị trị hiện tại được định vị
+    private LatLng defaultLocation; // Vị trí mặc định
+    private EditText searchLocation;    // EditText tìm địa điểm
+    private ImageView btnCurLocation;   // Button định vị vị trí hiện tại
+    private FloatingActionButton btnShare;  // Button chia sẽ vị trí hiện tại của bản
+
+    // Component cho chức năng chọn loại bản
     FloatingActionButton btnSelectType, btnSatellite, btnTerrain, btnDefault;
     boolean selectedMaptype;
 
     // Navigation Bar
     private BottomNavigationView navigation;
 
-    // Location information
+    // Component hiển thị thông tin của địa điểm
     private LinearLayout informationLocation;
     private TextView nameLocation, phoneLocation, ratingLocation, addressLocation, priceLevel;
     private Button btnAddFav;
-    private boolean isGoBack;
+    private boolean isGoBack;   // biến check khi nhấn back button
 
     // Data base
     private DBManager dbManager;
 
-    // Intro
+    // Giao diện loading
     private LinearLayout layoutIntro;
 
-    // Search via voice
+    // Tìm kiếm địa điểm bằng giọng
     private ImageView searchByVoice;
 
-    // Corona virus
+    // Component cho chức năng theo dõi thông tin Corona
     FloatingActionButton btnCorona;
     boolean isCheckingCorona;
-    ProgressDialog progressDialog;
+    ProgressDialog progressDialog;  // ProgressDialog hiển thị khi đang tải thông tin
+    // Dữ liệu theo cấp Quốc gia
     ArrayList<String> nameCountry;
     ArrayList<Integer> casesCountry;
     ArrayList<Integer> deadCountry;
     ArrayList<Integer> recoveredCountry;
     ArrayList<String> latCountry;
     ArrayList<String> lngCountry;
-
+    // Dữ liệu theo cấp Thành phố
     ArrayList<String> nameCity;
     ArrayList<Integer> casesCity;
     ArrayList<Integer> deadCity;
@@ -344,6 +338,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         searchByVoice.setVisibility(View.VISIBLE);
                     }
 
+                    if (isCheckingCorona) {
+                        mMap.clear();
+                        getCurrentLocation();
+                        isCheckingCorona = false;
+                    }
+
                     llFindPath.setVisibility(View.GONE);
                     edtOrigin.setText("");
                     edtDestination.setText("");
@@ -359,14 +359,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     btnTerrain.setTranslationY(0);
                     return true;
                 case R.id.find:
-                    //llFindPath.animate().translationY(llFindPath.getHeight());
                     //Hiện thanh tìm kiếm 2 địa điểm
                     llFindPath.setVisibility(View.VISIBLE);
-                    isCheckingCorona = false;
                     //Ẩn thanh search location
                     searchLocation.setVisibility(View.GONE);
                     searchByVoice.setVisibility(View.GONE);
                     isFindingPath = true;
+
+                    if (isCheckingCorona) {
+                        mMap.clear();
+                        isCheckingCorona = false;
+                    }
+
                     //Đưa button select map type xuống
                     btnSelectType.setTranslationY(llFindPath.getHeight());
                     btnDefault.setTranslationY(llFindPath.getHeight());
@@ -379,7 +383,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     searchLocation.setVisibility(View.VISIBLE);
                     searchByVoice.setVisibility(View.VISIBLE);
                     llFindPath.setVisibility(View.GONE);
-                    isCheckingCorona = false;
+                    if (isCheckingCorona) {
+                        mMap.clear();
+                        isCheckingCorona = false;
+                    }
                     edtOrigin.setText("");
                     edtDestination.setText("");
                     tvDistance.setText(R.string.init_kilometer);
@@ -396,15 +403,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     searchLocation.setText("");
                     return true;
                 case R.id.favorite:
+                    if (isCheckingCorona) {
+                        mMap.clear();
+                        getCurrentLocation();
+                        isCheckingCorona = false;
+                    }
                     isFindingPath = false;
-                    isCheckingCorona = false;
                     Intent intent_favorite = new Intent(MapsActivity.this, FavoriteActivity.class);
                     startActivityForResult(intent_favorite, RQCODE_FROM_FAVORITE);
                     searchLocation.setText("");
                     return true;
                 case R.id.history:
                     isFindingPath = false;
-                    isCheckingCorona = false;
+                    if (isCheckingCorona) {
+                        mMap.clear();
+                        getCurrentLocation();
+                        isCheckingCorona = false;
+                    }
                     Intent intent_history = new Intent(MapsActivity.this, HistoryActivity.class);
                     startActivityForResult(intent_history, RQCODE_FROM_HISTORY);
                     searchLocation.setText("");
@@ -945,20 +960,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         searchLocation.setText(place.getAddress());
         nameLocation.setText(place.getName());
         addressLocation.setText(place.getAddress());
-        // check phone number
+        // Hiển thị thông tin số điện thoại của địa
         if (place.getPhoneNumber() != null) {
             phoneLocation.setText("Phone number: " + place.getPhoneNumber());
         } else
             phoneLocation.setVisibility(View.GONE);
 
-        // check rating
+        // Hiển thị thông tin về rating
         if (place.getRating() != null) {
             ratingLocation.setText("Rating : " + place.getRating());
         } else
             ratingLocation.setVisibility(View.GONE);
 
 
-        // check price level
+        // Hiển thị thông tin về price
         if (place.getPriceLevel() != null) {
             priceLevel.setText("Price level: " + place.getPriceLevel());
         } else
@@ -975,7 +990,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             showPlaceInformation(place);
 
-            // listener cho button add favorite
+            // Button thêm địa điểm vào
             btnAddFav.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -984,7 +999,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             });
 
-            // thêm vào lịch sử tìm kiếm
+            // Thêm địa điểm đã tìm kiếm vào lịch sử
             dbManager.HISTORY_addPlace(new PlaceObject(place.getName(), place.getAddress(), place.getLatLng()));
 
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), DEFAULT_MAP_HEIGHT));
@@ -1008,13 +1023,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress()));
             nameLocation.setText(place.getName());
             addressLocation.setText(place.getAddress());
-            // check phone number
             phoneLocation.setVisibility(View.GONE);
-
-            // check rating
             ratingLocation.setVisibility(View.GONE);
-
-            // check price level
             priceLevel.setVisibility(View.GONE);
             informationLocation.setVisibility(LinearLayout.VISIBLE);
             isGoBack = true;
@@ -1037,13 +1047,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress()));
             nameLocation.setText(place.getName());
             addressLocation.setText(place.getAddress());
-            // check phone number
             phoneLocation.setVisibility(View.GONE);
-
-            // check rating
             ratingLocation.setVisibility(View.GONE);
-
-            // check price level
             priceLevel.setVisibility(View.GONE);
             informationLocation.setVisibility(LinearLayout.VISIBLE);
             isGoBack = true;
@@ -1076,17 +1081,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         searchLocation.setText(result[0]);
         nameLocation.setText(result[0]);
         addressLocation.setText(result[1]);
-        // check phone number
         phoneLocation.setVisibility(View.GONE);
-
-        // check rating
         if (result[4] != null) {
             ratingLocation.setText("Rating : " + result[4]);
             ratingLocation.setVisibility(View.VISIBLE);
         } else
             ratingLocation.setVisibility(View.GONE);
-
-        // check price level
         priceLevel.setVisibility(View.GONE);
         informationLocation.setVisibility(LinearLayout.VISIBLE);
         btnAddFav.setOnClickListener(new View.OnClickListener() {
@@ -1112,7 +1112,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         latCountry = (ArrayList<String>) Countries.get(4);
         lngCountry = (ArrayList<String>) Countries.get(5);
         countryCode = (ArrayList<String>) Countries.get(6);
-        Log.d("Hash", String.valueOf(countryCode));
         isCheckingCorona = true;
         mMap.clear();
         final ArrayList<MarkerOptions> non_text = new ArrayList<>();
@@ -1121,7 +1120,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         View markerView = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.covid_area_marker, null);
         CircularTextView numTxt = markerView.findViewById(R.id.circularTextView);
         MarkerOptions marker;
-        Log.d("Marker", "Create Countries markers");
         for (int i = 0; i < nameCountry.size(); ++i) {
             numTxt.setText(String.valueOf(casesCountry.get(i)));
             marker = new MarkerOptions()
@@ -1132,18 +1130,41 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             with_text.add(marker);
 
             numTxt.setText("");
+
+            int num_case = casesCountry.get(i);
             marker = new MarkerOptions()
                     .position(new LatLng(Double.parseDouble(latCountry.get(i)), Double.parseDouble(lngCountry.get(i))))
                     .title(nameCountry.get(i))
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_16))
                     .alpha(0.8f);
-            non_text.add(marker);
+            if (num_case > 5000000) {
+                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_36));
+                non_text.add(marker);
+            }
+            else if (num_case > 2000000) {
+                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_32));
+                non_text.add(marker);
+            }
+            else if (num_case > 1000000) {
+                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_28));
+                non_text.add(marker);
+            }
+            else if (num_case > 500000) {
+                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_24));
+                non_text.add(marker);
+            }
+            else if (num_case > 200000) {
+                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_20));
+                non_text.add(marker);
+            }
+            else {
+                marker.icon(BitmapDescriptorFactory.fromResource(R.drawable.circle_16));
+                non_text.add(marker);
+            }
         }
 
         boolean isInit = true;
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), -DEFAULT_MAP_HEIGHT));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 3.0f));
         mMap.clear();
-        Log.d("Marker", "Add marker");
         for(int i = 0; i < non_text.size(); ++i) {
             mMap.addMarker(non_text.get(i));
         }
@@ -1160,7 +1181,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         final ArrayList<MarkerOptions> forCities = new ArrayList<>();
 
-        Log.d("Marker", "Create Cities markers");
         for (int i = 0; i < countryCode.size(); ++i) {
             String code = countryCode.get(i);
             ArrayList<Object> temp = hashByCountryCode.get(code);
@@ -1195,9 +1215,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 arr.add(recovered.clone());
                 hashByCountryCode.put(code, (ArrayList<Object>) arr.clone());
             }
-            Log.d("Hash", String.valueOf(hashByCountryCode.get(code)));
         }
-        Log.d("Marker", "Complete markers all");
 
         progressDialog.dismiss();
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
@@ -1281,7 +1299,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             bottomSheetDialog.show();
             return true;
         }
-        return true;
+        return false;
     }
 
     @Override

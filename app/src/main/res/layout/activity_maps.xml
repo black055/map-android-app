@@ -97,7 +97,7 @@
         android:hint="@string/search"
         android:iconifiedByDefault="false"
         android:maxLines="1"
-        android:paddingLeft="15dp"
+        android:paddingLeft="20dp"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -252,15 +252,16 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:visibility="visible">
 
             <HorizontalScrollView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="3"
-                android:scrollbars="none"
+                android:layout_marginLeft="12dp"
                 android:layout_marginRight="20dp"
-                android:layout_marginLeft="12dp">
+                android:layout_weight="3"
+                android:scrollbars="none">
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -329,7 +330,11 @@
             android:ems="10"
             android:hint="@string/enter_origin_address"
             android:inputType="textPersonName"
-            android:padding="10dp" />
+            android:paddingLeft="20dp"
+            android:paddingTop="10dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="10dp"
+            android:visibility="visible" />
 
         <EditText
             android:id="@+id/edtDestination"
@@ -343,12 +348,17 @@
             android:ems="10"
             android:hint="@string/enter_destination_address"
             android:inputType="textPersonName"
-            android:padding="10dp" />
+            android:paddingLeft="20dp"
+            android:paddingTop="10dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="10dp"
+            android:visibility="visible" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:visibility="visible">
 
             <Button
                 android:id="@+id/btnFindPath"
@@ -429,17 +439,17 @@
 
     <ImageView
         android:id="@+id/searchVoice"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
-        android:layout_marginBottom="200dp"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:layout_marginTop="12dp"
         android:background="@drawable/search_voice_background"
         android:src="@drawable/ic_baseline_mic_24"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.901"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.044" />
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="@+id/searchLocation"
+        app:layout_constraintHorizontal_bias="0.931"
+        app:layout_constraintLeft_toLeftOf="@+id/searchLocation"
+        app:layout_constraintRight_toRightOf="@+id/searchLocation"
+        app:layout_constraintTop_toTopOf="@+id/searchLocation"
+        app:layout_constraintVertical_bias="0.076" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
