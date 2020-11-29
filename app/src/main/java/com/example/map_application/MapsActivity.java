@@ -135,9 +135,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ImageView btnCurLocation;   // Button định vị vị trí hiện tại
     private FloatingActionButton btnShare;  // Button chia sẽ vị trí hiện tại của bản
 
-    // Component cho chức năng chọn loại bản
-    FloatingActionButton btnSelectType, btnSatellite, btnTerrain, btnDefault;
+    // Component cho chức năng chọn loại bản đồ
+    FloatingActionButton btnSelectType, btnSatellite, btnTerrain, btnDefault, btnTraffic;
     boolean selectedMaptype;
+    boolean isTrafficMode;
 
     // Navigation Bar
     private BottomNavigationView navigation;
@@ -254,6 +255,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnDefault = findViewById(R.id.map_default);
         btnCurLocation = findViewById(R.id.btnCurLocation);
         btnShare = findViewById(R.id.btnShare);
+        btnTraffic = findViewById(R.id.btnTraffic);
 
         // Component để hiển thị thông tin của địa điểm được tìm thấy
         informationLocation = findViewById(R.id.infoLayout);
@@ -286,6 +288,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // ẩn ban đầu cho một số view
         selectedMaptype = false;
+        isTrafficMode = false;
         btnDefault.hide();
         btnSatellite.hide();
         btnTerrain.hide();
@@ -297,6 +300,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnSelectType.setVisibility(View.GONE);
         searchByVoice.setVisibility(View.GONE);
         btnCorona.setVisibility(View.GONE);
+        btnTraffic.setVisibility(View.GONE);
         isGoBack = false;
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -515,6 +519,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             layoutIntro.setVisibility(View.GONE);
                             searchByVoice.setVisibility(View.VISIBLE);
                             btnCorona.setVisibility(View.VISIBLE);
+                            btnTraffic.setVisibility(View.VISIBLE);
                             if(isFindingPath) searchByVoice.setVisibility(View.GONE);
                         }
 
@@ -773,6 +778,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 intent.putExtra("android.speech.extra.LANGUAGE_MODEL", "free_form");
                 intent.putExtra("android.speech.extra.PROMPT", "Speak Now");
                 startActivityForResult(intent, RQCODE_FOR_SEARCH_VIA_VOICE);
+            }
+        });
+
+        btnTraffic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!isTrafficMode) {
+                    mMap.setTrafficEnabled(true);
+                    btnTraffic.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_baseline_traffic_24));
+                } else {
+                    mMap.setTrafficEnabled(false);
+                    btnTraffic.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_outline_traffic_24));
+                }
+
+                isTrafficMode = !isTrafficMode;
             }
         });
 
