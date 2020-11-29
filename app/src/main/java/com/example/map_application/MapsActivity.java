@@ -906,7 +906,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Lấy route chính và phụ trong mảng
         //Đường ngắn nhất là đường chính là route 0 trong routes. Đường phụ dài hơn là route 1
         Route route = !isFindingSubRoute ? routes.get(0) : routes.get(1);
-        Route subRoute = isFindingSubRoute ? routes.get(0) : routes.get(1);
 
         //Ghi thời gian, khoảng cách vào 2 ô textView duration, distance
         tvDuration.setText(route.duration.text);
@@ -923,6 +922,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //Xử lý nếu có tuyến phụ
         if (routes.size() > 1) {
+            Route subRoute = isFindingSubRoute ? routes.get(0) : routes.get(1);
             //Vẽ các tuyến phụ
             PolylineOptions subPolylineOptions = new PolylineOptions().
                     geodesic(true).
