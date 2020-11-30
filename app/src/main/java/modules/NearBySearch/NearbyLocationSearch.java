@@ -9,6 +9,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.json.JSONException;
@@ -97,8 +98,8 @@ public class NearbyLocationSearch extends AsyncTask<Object, String, String> {
             double lat = Double.parseDouble(place.get("lat")), lng = Double.parseDouble(place.get("lng"));
 
             mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng))
-                                                .title(name + " : " + vicinity)
-                                                .icon(markerIcon));
+                                                              .title(name + " : " + vicinity)
+                                                              .icon(markerIcon));
         }
     }
 }

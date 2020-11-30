@@ -127,6 +127,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             btnDrivingMode, btnWalkingMode, btnTransitMode;
     private boolean routeType;
 
+    // Component cho chức năng tìm địa điểm gần đây
     private PopupMenu popupMenu;
 
     private Location lastLocation;  // Vị trị hiện tại được định vị
@@ -137,8 +138,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     // Component cho chức năng chọn loại bản đồ
     FloatingActionButton btnSelectType, btnSatellite, btnTerrain, btnDefault, btnTraffic;
-    boolean selectedMaptype;
-    boolean isTrafficMode;
+    private boolean selectedMaptype;
+    private boolean isTrafficMode;
 
     // Navigation Bar
     private BottomNavigationView navigation;
@@ -246,7 +247,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         popupMenu = new PopupMenu(MapsActivity.this, navigation);
         popupMenu.getMenuInflater().inflate(R.menu.places_picker_menu, popupMenu.getMenu());
-        //popupMenu.setForceShowIcon(true);
 
         // Component để hiển thị lựa chọn kiểu bản đồ
         btnSelectType = findViewById(R.id.floating_button_map_type);
@@ -343,14 +343,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         isGoBack = false;
                     }
 
-                    if (isFindingPath) {
+                    if (isFindingPath)
                         searchByVoice.setVisibility(View.VISIBLE);
-                    }
 
-                    if (isCheckingCorona) {
+                    if (isCheckingCorona)
+                        isCheckingCorona = false;
+
+                    if (mMap != null) {
                         mMap.clear();
                         getCurrentLocation();
-                        isCheckingCorona = false;
                     }
 
                     llFindPath.setVisibility(View.GONE);
@@ -446,6 +447,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.getUiSettings().setMapToolbarEnabled(false);
         getCurrentLocation();
         mMap.setOnPolylineClickListener(this);
+        mMap.setOnMarkerClickListener(this);
     }
 
     // Chuyển màn hình đến vị trí hiện tại của thiết bị
@@ -692,8 +694,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     public void onComplete(@NonNull Task<Location> task) {
                                         if (task.isSuccessful() && task.getResult() != null) {
                                             lastLocation = task.getResult();
-                                            String origin = "" + lastLocation.getLatitude() + "," + lastLocation.getLongitude();
+                                            String origin = lastLocation.getLatitude() + "," + lastLocation.getLongitude();
                                             String destination = searchLocation.getText().toString();
+                                            edtOrigin.setText(origin);
+                                            edtDestination.setText(destination);
                                             try {
                                                 new DirectionFinder(MapsActivity.this, origin, destination, travelMode, false).execute();
                                                 informationLocation.setVisibility(View.GONE);
@@ -723,6 +727,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @SuppressLint("NonConstantResourceId")
             @Override
             public boolean onMenuItemClick(MenuItem item) {
+                getCurrentLocation();
                 if (lastLocation != null) {
                     String type = "";
                     LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
@@ -755,7 +760,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
                     if(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() != NetworkInfo.State.CONNECTED &&
                             connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() != NetworkInfo.State.CONNECTED) {
-                        Toast.makeText(MapsActivity.this, "Please turn on the Internet !", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MapsActivity.this, "Please turn on the Internet!", Toast.LENGTH_SHORT).show();
                         return false;
                     }
                     else
@@ -803,7 +808,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
                 if(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() != NetworkInfo.State.CONNECTED &&
                         connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() != NetworkInfo.State.CONNECTED) {
-                    Toast.makeText(MapsActivity.this, "Please turn on the Internet !", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MapsActivity.this, "Please turn on the Internet!", Toast.LENGTH_SHORT).show();
                 }
                 else
                 {
@@ -974,11 +979,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         String origin = edtOrigin.getText().toString();
         String destination = edtDestination.getText().toString();
         if (origin.isEmpty()) {
-            Toast.makeText(this, "Please enter origin address!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Vui lòng nhập địa điểm xuất phát!", Toast.LENGTH_SHORT).show();
             return;
         }
         if (destination.isEmpty()) {
-            Toast.makeText(this, "Please enter destination address!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Vui lòng nhập địa điểm cần đến!", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -1279,8 +1284,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }
         });
-
-        mMap.setOnMarkerClickListener(this);
     }
 
     @Override

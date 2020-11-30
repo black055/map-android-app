@@ -68,6 +68,8 @@ public class DirectionFinder {
                     buffer.append(line + "\n");
                 }
 
+                is.close();
+                reader.close();
                 return buffer.toString();
 
             } catch (MalformedURLException e) {
