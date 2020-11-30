@@ -126,6 +126,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Button btnFindPath, btnFindFromCurrent,
             btnDrivingMode, btnWalkingMode, btnTransitMode;
     private boolean routeType;
+    private boolean isFindFromCurrentLocation;
 
     // Component cho chức năng tìm địa điểm gần đây
     private PopupMenu popupMenu;
@@ -233,6 +234,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //route type mặc định là false, nghĩa là tuyến đang chọn là tuyến ngắn nhất
         //nếu = 1 thì tuyến chọn là tuyến dài hơn
         routeType = false;
+        isFindFromCurrentLocation = false;
 
         //Chọn phương thức di chuyển
         travelMode = "driving";
@@ -673,6 +675,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onClick(View v) {
                 routeType = false;
+                if (edtOrigin.getText().toString().equals("Vị trí hiện tại"))
+                    isFindFromCurrentLocation = true;
                 sendRequest(false);
             }
         });
@@ -694,16 +698,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                     public void onComplete(@NonNull Task<Location> task) {
                                         if (task.isSuccessful() && task.getResult() != null) {
                                             lastLocation = task.getResult();
-                                            String origin = lastLocation.getLatitude() + "," + lastLocation.getLongitude();
+                                            //String origin = lastLocation.getLatitude() + "," + lastLocation.getLongitude();
+                                            String origin = "Vị trí hiện tại";
                                             String destination = searchLocation.getText().toString();
                                             edtOrigin.setText(origin);
                                             edtDestination.setText(destination);
-                                            try {
+                                            isFindFromCurrentLocation = true;
+                                            btnFindPath.performClick();
+
+                                            /*try {
                                                 new DirectionFinder(MapsActivity.this, origin, destination, travelMode, false).execute();
+                                                //Để biến tìm từ vị trí hiện tại lại mặc định
                                                 informationLocation.setVisibility(View.GONE);
                                             } catch (UnsupportedEncodingException e) {
                                                 e.printStackTrace();
-                                            }
+                                            }*/
                                         }
                                     }
 
@@ -838,8 +847,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 //Nếu đang là driving thì thoát
                 if (travelMode.equals("driving")) return;
                 travelMode = "driving";
-                routeType = false;
-                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest(false);
+                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) btnFindPath.performClick();
             }
         });
 
@@ -857,8 +865,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 if (travelMode.equals("walking")) return;
                 travelMode = "walking";
-                routeType = false;
-                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest(false);
+                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) btnFindPath.performClick();
             }
         });
 
@@ -876,8 +883,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 if (travelMode.equals("transit")) return;
                 travelMode = "transit";
-                routeType = false;
-                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) sendRequest(false);
+                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) btnFindPath.performClick();
             }
         });
 
@@ -885,10 +891,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ivSetOriginByCurrentPosition.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getCurrentLocation();
-                String temp = String.valueOf(lastLocation.getLatitude()) + ", "
-                        + String.valueOf(lastLocation.getLongitude());
-                edtOrigin.setText(temp);
+                edtOrigin.setText(String.valueOf("Vị trí hiện tại"));
                 searchByVoice.setVisibility(View.GONE);
             }
         });
@@ -921,7 +924,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         polylinePaths = new ArrayList<>();
 
         // Không tìm được routes từ google api cấp
-        if (routes.size() == 0) return;
+        if (routes.size() == 0) {
+            Toast.makeText(this, "Không tìm được đường đi!", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         //Xóa các marker trên bản đồ
         mMap.clear();
@@ -937,10 +943,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         tvDistance.setText(route.distance.text);
 
         //add marker điểm đầu, điểm cuối lên mMap
-        mMap.addMarker(new MarkerOptions()
-                .icon(bitmapDescriptorFromVector(MapsActivity.this, R.drawable.ic_position_start))
-                .title(route.startAddress)
-                .position(route.startLocation));
+        if (isFindFromCurrentLocation){
+            curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()))
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
+                    .anchor(0.5f, 0.5f));
+            isFindFromCurrentLocation = false;
+        }
+        else {
+            mMap.addMarker(new MarkerOptions()
+                    .icon(bitmapDescriptorFromVector(MapsActivity.this, R.drawable.ic_position_start))
+                    .title(route.startAddress)
+                    .position(route.startLocation));
+        }
         mMap.addMarker(new MarkerOptions()
                 .title(route.endAddress)
                 .position(route.endLocation));
@@ -988,6 +1002,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         try {
+            if (isFindFromCurrentLocation) {
+                getCurrentLocation();
+                origin = String.valueOf(lastLocation.getLatitude()) + ", " + String.valueOf(lastLocation.getLongitude());
+            }
             // Tìm đường dựa vào address điểm đầu, cuối
             new DirectionFinder(this, origin, destination, travelMode, subRoute).execute();
         } catch (UnsupportedEncodingException e) {
@@ -1361,11 +1379,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             //Nếu tuyến đang chọn là tuyến dài hơn thì đổi tuyến user chọn sang tuyến ngắn hơn
             if (routeType) {
                 routeType = false;
+                if (edtOrigin.getText().toString().equals("Vị trí hiện tại"))
+                    isFindFromCurrentLocation = true;
                 sendRequest(false);
             }
             else {
                 //Tuyến chọn hiện tại là tuyến ngắn hơn. User cần đổi sang tuyến dài hơn
                 routeType = true;
+                if (edtOrigin.getText().toString().equals("Vị trí hiện tại"))
+                    isFindFromCurrentLocation = true;
                 sendRequest(true);
             }
         }
