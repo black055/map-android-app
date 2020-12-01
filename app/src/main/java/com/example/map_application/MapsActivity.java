@@ -23,6 +23,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -44,7 +46,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.map_application.customtextview.CircularTextView;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -57,8 +58,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.Autocomplete;
@@ -184,6 +183,47 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     // Marker icons array for nearby location search
     HashMap<String, Integer> markerIcons;
 
+    private final LocationListener mLocationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(final Location location) {
+            LatLng current = new LatLng(location.getLatitude(), location.getLongitude());
+            lastLocation = location;
+            if (curLocationMarker != null) {
+                curLocationMarker.setPosition(current);
+            } else {
+                curLocationMarker = mMap.addMarker(new MarkerOptions().position(current)
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
+                        .anchor(0.5f, 0.5f));
+            }
+
+            if (moveCamera) {
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current, DEFAULT_MAP_HEIGHT),
+                        new GoogleMap.CancelableCallback() {
+                            @Override
+                            public void onFinish() {
+                                navigation.setVisibility(View.VISIBLE);
+                                btnShare.setVisibility(View.VISIBLE);
+                                btnSelectType.setVisibility(View.VISIBLE);
+                                layoutIntro.setVisibility(View.GONE);
+                                searchByVoice.setVisibility(View.VISIBLE);
+                                btnCorona.setVisibility(View.VISIBLE);
+                                btnTraffic.setVisibility(View.VISIBLE);
+                                if(isFindingPath) searchByVoice.setVisibility(View.GONE);
+                            }
+
+                            @Override
+                            public void onCancel() {
+
+                            }
+                        });
+                moveCamera = false;
+            }
+        }
+    };
+    private LocationManager mLocationManager;
+    boolean isSetLocationListener;
+    boolean moveCamera;
+
     // Convert a view to bitmap
     public static Bitmap createDrawableFromView(Context context, View view) {
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -205,6 +245,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -219,6 +260,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Tọa độ mặc định của ứng dụng
         defaultLocation = new LatLng(10.8759, 106.7992);
         curLocationMarker = null;
+
+        isSetLocationListener = false;
+        moveCamera = true;
 
         // Thêm find path
         llFindPath = findViewById(R.id.llFindPath);
@@ -353,7 +397,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     if (mMap != null) {
                         mMap.clear();
-                        getCurrentLocation();
+                        if (lastLocation != null) {
+                            curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()))
+                                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
+                                    .anchor(0.5f, 0.5f));
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), DEFAULT_MAP_HEIGHT));
+                        }
                     }
 
                     llFindPath.setVisibility(View.GONE);
@@ -501,41 +550,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        Task<Location> locationResult = LocationServices.getFusedLocationProviderClient(MapsActivity.this).getLastLocation();
-        locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
-            @Override
-            public void onComplete(@NonNull Task<Location> task) {
-                if (task.isSuccessful() && task.getResult() != null) {
-                    lastLocation = task.getResult();
-                    LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-                    mMap.clear();
-                    curLocationMarker = mMap.addMarker(new MarkerOptions().position(current)
-                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
-                            .anchor(0.5f, 0.5f));
 
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current, DEFAULT_MAP_HEIGHT),
-                            new GoogleMap.CancelableCallback() {
-                        @Override
-                        public void onFinish() {
-                            navigation.setVisibility(View.VISIBLE);
-                            btnShare.setVisibility(View.VISIBLE);
-                            btnSelectType.setVisibility(View.VISIBLE);
-                            layoutIntro.setVisibility(View.GONE);
-                            searchByVoice.setVisibility(View.VISIBLE);
-                            btnCorona.setVisibility(View.VISIBLE);
-                            btnTraffic.setVisibility(View.VISIBLE);
-                            if(isFindingPath) searchByVoice.setVisibility(View.GONE);
-                        }
+        if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            Toast.makeText(MapsActivity.this, "Vui lòng mở dịch vụ GPS!", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-                        @Override
-                        public void onCancel() {
-
-                        }
-                    });
-                }
+        if (!isSetLocationListener) {
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 2, mLocationListener);
+            isSetLocationListener = true;
+        } else if (lastLocation != null) {
+            if (curLocationMarker == null) {
+                curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()))
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
+                        .anchor(0.5f, 0.5f));
             }
-
-        });
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), DEFAULT_MAP_HEIGHT));
+        }
     }
 
     private void setActionListener() {
@@ -640,26 +671,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 if (ActivityCompat.checkSelfPermission(MapsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                                     return;
                                 }
-                                Task<Location> locationResult = LocationServices.getFusedLocationProviderClient(MapsActivity.this).getLastLocation();
-                                locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Location> task) {
-                                        if (task.isSuccessful() && task.getResult() != null) {
-                                            lastLocation = task.getResult();
-                                            Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
-                                            sharingIntent.setType("text/plain");
-                                            sharingIntent.putExtra(Intent.EXTRA_TEXT, "https://maps.google.com?q="
-                                                    + lastLocation.getLatitude() + "," + lastLocation.getLongitude());
-                                            startActivity(Intent.createChooser(sharingIntent, "Share via"));
-                                        }
-                                    }
-
-                                });
+                                if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                                    Toast.makeText(MapsActivity.this, "Vui lòng mở dịch vụ GPS!", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+                                if (!isSetLocationListener) {
+                                    getCurrentLocation();
+                                    // Đợi lấy xong vị trí của thiết bị và di chuyển camera đến đây
+                                    while (moveCamera == true);
+                                }
+                                if (lastLocation != null) {
+                                    Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                                    sharingIntent.setType("text/plain");
+                                    sharingIntent.putExtra(Intent.EXTRA_TEXT, "https://maps.google.com?q="
+                                            + lastLocation.getLatitude() + "," + lastLocation.getLongitude());
+                                    startActivity(Intent.createChooser(sharingIntent, "Share via"));
+                                }
                             }
 
                             @Override
                             public void onPermissionDenied(PermissionDeniedResponse response) {
-                                Toast.makeText(getApplicationContext(), "Yêu cầu truy cập vị trí", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(), "Yêu cầu cấp quyền truy cập vị trí!", Toast.LENGTH_SHORT).show();
                             }
 
                             @Override
@@ -692,36 +724,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                         != PackageManager.PERMISSION_GRANTED) {
                                     return;
                                 }
-                                Task<Location> locationResult = LocationServices.getFusedLocationProviderClient(MapsActivity.this).getLastLocation();
-                                locationResult.addOnCompleteListener(new OnCompleteListener<Location>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Location> task) {
-                                        if (task.isSuccessful() && task.getResult() != null) {
-                                            lastLocation = task.getResult();
-                                            //String origin = lastLocation.getLatitude() + "," + lastLocation.getLongitude();
-                                            String origin = "Vị trí hiện tại";
-                                            String destination = searchLocation.getText().toString();
-                                            edtOrigin.setText(origin);
-                                            edtDestination.setText(destination);
-                                            isFindFromCurrentLocation = true;
-                                            btnFindPath.performClick();
-
-                                            /*try {
-                                                new DirectionFinder(MapsActivity.this, origin, destination, travelMode, false).execute();
-                                                //Để biến tìm từ vị trí hiện tại lại mặc định
-                                                informationLocation.setVisibility(View.GONE);
-                                            } catch (UnsupportedEncodingException e) {
-                                                e.printStackTrace();
-                                            }*/
-                                        }
-                                    }
-
-                                });
+                                if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                                    Toast.makeText(MapsActivity.this, "Vui lòng mở dịch vụ GPS!", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+                                if (!isSetLocationListener) {
+                                    getCurrentLocation();
+                                    // Đợi lấy xong vị trí của thiết bị và di chuyển camera đến đây
+                                    while (moveCamera == true);
+                                }
+                                if (lastLocation != null) {
+                                    String origin = "Vị trí hiện tại";
+                                    String destination = searchLocation.getText().toString();
+                                    edtOrigin.setText(origin);
+                                    edtDestination.setText(destination);
+                                    isFindFromCurrentLocation = true;
+                                    btnFindPath.performClick();
+                                }
                             }
 
                             @Override
                             public void onPermissionDenied(PermissionDeniedResponse response) {
-                                Toast.makeText(getApplicationContext(), "Yêu cầu truy cập vị trí", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(), "Yêu cầu cấp quyền truy cập vị trí!", Toast.LENGTH_SHORT).show();
                             }
 
                             @Override
@@ -736,7 +760,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @SuppressLint("NonConstantResourceId")
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                getCurrentLocation();
+                if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    Toast.makeText(MapsActivity.this, "Vui lòng mở dịch vụ GPS!", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+                if (!isSetLocationListener) {
+                    getCurrentLocation();
+                    // Đợi lấy xong vị trí của thiết bị và di chuyển camera đến đây
+                    while (moveCamera == true);
+                }
                 if (lastLocation != null) {
                     String type = "";
                     LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
@@ -781,6 +813,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                     return true;
                 }
+                Toast.makeText(MapsActivity.this, "Không thể xác định vị trí của thiết bị!", Toast.LENGTH_SHORT).show();
                 return false;
             }
         });
@@ -891,7 +924,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ivSetOriginByCurrentPosition.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                edtOrigin.setText(String.valueOf("Vị trí hiện tại"));
+                if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    Toast.makeText(MapsActivity.this, "Vui lòng mở dịch vụ GPS!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                edtOrigin.setText("Vị trí hiện tại");
                 searchByVoice.setVisibility(View.GONE);
             }
         });
@@ -1003,8 +1040,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         try {
             if (isFindFromCurrentLocation) {
-                getCurrentLocation();
-                origin = String.valueOf(lastLocation.getLatitude()) + ", " + String.valueOf(lastLocation.getLongitude());
+                if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    Toast.makeText(this, "Vui lòng mở dịch vụ GPS!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (!isSetLocationListener) {
+                    getCurrentLocation();
+                    while (moveCamera);
+                }
+                if (lastLocation != null)   origin = lastLocation.getLatitude() + ", " + lastLocation.getLongitude();
             }
             // Tìm đường dựa vào address điểm đầu, cuối
             new DirectionFinder(this, origin, destination, travelMode, subRoute).execute();
