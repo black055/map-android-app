@@ -125,8 +125,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ImageView ivSetOriginByCurrentPosition;
     private Button btnFindPath, btnFindFromCurrent,
             btnDrivingMode, btnWalkingMode, btnTransitMode;
-    private boolean routeType;
-    private boolean isFindFromCurrentLocation;
+    private boolean routeType, isFindFromCurrentLocation;
 
     // Component cho chức năng tìm địa điểm gần đây
     private PopupMenu popupMenu;
@@ -847,7 +846,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 //Nếu đang là driving thì thoát
                 if (travelMode.equals("driving")) return;
                 travelMode = "driving";
-                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) btnFindPath.performClick();
+                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) {
+                    btnFindPath.performClick();
+                }
             }
         });
 
@@ -865,7 +866,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 if (travelMode.equals("walking")) return;
                 travelMode = "walking";
-                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) btnFindPath.performClick();
+                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) {
+                    btnFindPath.performClick();
+                }
             }
         });
 
@@ -883,7 +886,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 if (travelMode.equals("transit")) return;
                 travelMode = "transit";
-                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) btnFindPath.performClick();
+                if (!edtOrigin.getText().toString().isEmpty() && !edtDestination.getText().toString().isEmpty()) {
+                    btnFindPath.performClick();
+                }
             }
         });
 
@@ -925,6 +930,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Không tìm được routes từ google api cấp
         if (routes.size() == 0) {
+            tvDuration.setText("---");
+            tvDistance.setText("---");
             Toast.makeText(this, "Không tìm được đường đi!", Toast.LENGTH_SHORT).show();
             return;
         }
