@@ -96,7 +96,8 @@
         android:drawableLeft="@drawable/ic_baseline_search_24"
         android:hint="@string/search"
         android:iconifiedByDefault="false"
-        android:maxLines="1"
+        android:inputType="textPersonName"
+        android:paddingRight="50dp"
         android:paddingLeft="20dp"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -118,7 +119,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:srcCompat="@drawable/ic_baseline_share_24"
         tools:ignore="MissingConstraints,VectorDrawableCompat" />
-
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnCorona"

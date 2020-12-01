@@ -30,6 +30,7 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -93,6 +94,7 @@ import modules.StoreData.DBManager;
 import modules.Covid.CovidAPI;
 import modules.Covid.CovidInterface;
 
+import static android.R.layout.browser_link_context_header;
 import static android.R.layout.simple_list_item_2;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
@@ -222,6 +224,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LocationManager mLocationManager;
     boolean isSetLocationListener;
     boolean moveCamera;
+    boolean isHome;
 
     // Convert a view to bitmap
     public static Bitmap createDrawableFromView(Context context, View view) {
@@ -292,6 +295,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
         popupMenu = new PopupMenu(MapsActivity.this, navigation);
         popupMenu.getMenuInflater().inflate(R.menu.places_picker_menu, popupMenu.getMenu());
+        popupMenu.setForceShowIcon(true);
 
         // Component để hiển thị lựa chọn kiểu bản đồ
         btnSelectType = findViewById(R.id.floating_button_map_type);
@@ -347,6 +351,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnCorona.setVisibility(View.GONE);
         btnTraffic.setVisibility(View.GONE);
         isGoBack = false;
+        isHome = false;
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
@@ -382,7 +387,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             switch (item.getItemId()) {
                 case R.id.home:
                     searchLocation.setVisibility(View.VISIBLE);
-
                     if (isGoBack) {
                         informationLocation.setVisibility(View.VISIBLE);
                         isGoBack = false;
@@ -394,14 +398,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     if (isCheckingCorona)
                         isCheckingCorona = false;
 
-                    if (mMap != null) {
+                    if (!isHome) {
+                        if (mMap != null) {
                         mMap.clear();
                         if (lastLocation != null) {
                             curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()))
                                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
                                     .anchor(0.5f, 0.5f));
                             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), DEFAULT_MAP_HEIGHT));
+                        } else {
+                            curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(defaultLocation.latitude, defaultLocation.longitude))
+                                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
+                                    .anchor(0.5f, 0.5f));
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));
                         }
+                        }
+                        isHome = true;
                     }
 
                     llFindPath.setVisibility(View.GONE);
@@ -419,6 +431,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     btnTerrain.setTranslationY(0);
                     return true;
                 case R.id.find:
+                    isHome = false;
                     //Hiện thanh tìm kiếm 2 địa điểm
                     llFindPath.setVisibility(View.VISIBLE);
                     //Ẩn thanh search location
@@ -440,6 +453,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     searchLocation.setText("");
                     return true;
                 case R.id.place:
+                    isHome = false;
                     searchLocation.setVisibility(View.VISIBLE);
                     searchByVoice.setVisibility(View.VISIBLE);
                     llFindPath.setVisibility(View.GONE);
@@ -463,6 +477,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     searchLocation.setText("");
                     return true;
                 case R.id.favorite:
+                    isHome = false;
                     if (isCheckingCorona) {
                         mMap.clear();
                         getCurrentLocation();
@@ -474,6 +489,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     searchLocation.setText("");
                     return true;
                 case R.id.history:
+                    isHome = false;
                     isFindingPath = false;
                     if (isCheckingCorona) {
                         mMap.clear();
@@ -496,6 +512,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         searchByVoice.setVisibility(View.GONE);
         mMap.getUiSettings().setMapToolbarEnabled(false);
         getCurrentLocation();
+        isHome = true;
         mMap.setOnPolylineClickListener(this);
         mMap.setOnMarkerClickListener(this);
     }
@@ -510,6 +527,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION)
                                 != PackageManager.PERMISSION_GRANTED) {
                             return;
+                        }
+
+                        if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                            searchByVoice.setVisibility(View.GONE);
+                            mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT)
+                                    , new GoogleMap.CancelableCallback() {
+                                        @Override
+                                        public void onFinish() {
+                                            navigation.setVisibility(View.VISIBLE);
+                                            btnShare.setVisibility(View.VISIBLE);
+                                            btnSelectType.setVisibility(View.VISIBLE);
+                                            layoutIntro.setVisibility(View.GONE);
+                                            searchByVoice.setVisibility(View.VISIBLE);
+                                            if(isFindingPath) searchByVoice.setVisibility(View.GONE);
+                                        }
+
+                                        @Override
+                                        public void onCancel() {
+
+                                        }
+                                    });
                         }
                         taskForGetCurLocation();
                     }
@@ -577,6 +616,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     informationLocation.setVisibility(LinearLayout.GONE);
                 }
                 getCurrentLocation();
+                searchByVoice.setVisibility(View.VISIBLE);
                 isCheckingCorona = false;
             }
         });
@@ -775,6 +815,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     curLocationMarker = mMap.addMarker(new MarkerOptions().position(current)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
                             .anchor(0.5f, 0.5f));
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), DEFAULT_MAP_HEIGHT));
                     
                     switch (item.getItemId()) {
                         case R.id.menuATM:
