@@ -1074,13 +1074,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         tvDistance.setText(route.distance.text);
 
         //add marker điểm đầu, điểm cuối lên mMap
-        if (isFindFromCurrentLocation){
-            curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()))
-                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
-                    .anchor(0.5f, 0.5f));
-            isFindFromCurrentLocation = false;
-        }
-        else {
+        if (!isFindFromCurrentLocation) {
             markersToRemove.add(mMap.addMarker(new MarkerOptions()
                     .icon(bitmapDescriptorFromVector(MapsActivity.this, R.drawable.ic_position_start))
                     .title(route.startAddress)
