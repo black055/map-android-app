@@ -30,7 +30,6 @@ import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -94,7 +93,6 @@ import modules.StoreData.DBManager;
 import modules.Covid.CovidAPI;
 import modules.Covid.CovidInterface;
 
-import static android.R.layout.browser_link_context_header;
 import static android.R.layout.simple_list_item_2;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
@@ -135,7 +133,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LatLng defaultLocation; // Vị trí mặc định
     private EditText searchLocation;    // EditText tìm địa điểm
     private ImageView btnCurLocation;   // Button định vị vị trí hiện tại
-    private FloatingActionButton btnShare;  // Button chia sẽ vị trí hiện tại của bản
+    private FloatingActionButton btnShare;  // Button chia sẻ vị trí hiện tại của bản
 
     // Component cho chức năng chọn loại bản đồ
     FloatingActionButton btnSelectType, btnSatellite, btnTerrain, btnDefault, btnTraffic;
@@ -184,43 +182,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     // Marker icons array for nearby location search
     HashMap<String, Integer> markerIcons;
 
-    private final LocationListener mLocationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(final Location location) {
-            LatLng current = new LatLng(location.getLatitude(), location.getLongitude());
-            lastLocation = location;
-            if (curLocationMarker != null) {
-                curLocationMarker.setPosition(current);
-            } else {
-                curLocationMarker = mMap.addMarker(new MarkerOptions().position(current)
-                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
-                        .anchor(0.5f, 0.5f));
-            }
-
-            if (moveCamera) {
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current, DEFAULT_MAP_HEIGHT),
-                        new GoogleMap.CancelableCallback() {
-                            @Override
-                            public void onFinish() {
-                                navigation.setVisibility(View.VISIBLE);
-                                btnShare.setVisibility(View.VISIBLE);
-                                btnSelectType.setVisibility(View.VISIBLE);
-                                layoutIntro.setVisibility(View.GONE);
-                                searchByVoice.setVisibility(View.VISIBLE);
-                                btnCorona.setVisibility(View.VISIBLE);
-                                btnTraffic.setVisibility(View.VISIBLE);
-                                if(isFindingPath) searchByVoice.setVisibility(View.GONE);
-                            }
-
-                            @Override
-                            public void onCancel() {
-
-                            }
-                        });
-                moveCamera = false;
-            }
-        }
-    };
+    private LocationListener mLocationListener;
     private LocationManager mLocationManager;
     boolean isSetLocationListener;
     boolean moveCamera;
@@ -249,6 +211,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        mLocationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(final Location location) {
+                LatLng current = new LatLng(location.getLatitude(), location.getLongitude());
+                lastLocation = location;
+                if (curLocationMarker != null) {
+                    curLocationMarker.setPosition(current);
+                } else {
+                    curLocationMarker = mMap.addMarker(new MarkerOptions().position(current)
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
+                            .anchor(0.5f, 0.5f));
+                }
+
+                if (moveCamera) {
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(current, DEFAULT_MAP_HEIGHT),
+                            new GoogleMap.CancelableCallback() {
+                                @Override
+                                public void onFinish() {
+                                    navigation.setVisibility(View.VISIBLE);
+                                    btnShare.setVisibility(View.VISIBLE);
+                                    btnSelectType.setVisibility(View.VISIBLE);
+                                    layoutIntro.setVisibility(View.GONE);
+                                    searchByVoice.setVisibility(View.VISIBLE);
+                                    btnCorona.setVisibility(View.VISIBLE);
+                                    btnTraffic.setVisibility(View.VISIBLE);
+                                    if(isFindingPath) searchByVoice.setVisibility(View.GONE);
+                                }
+
+                                @Override
+                                public void onCancel() {
+
+                                }
+                            });
+                    moveCamera = false;
+                }
+            }
+        };
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -595,7 +595,37 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
         if (!isSetLocationListener) {
-            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 2, mLocationListener);
+            // Kiểm tra xem có vị trí hiện tại sẵn không?
+            lastLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if (lastLocation != null) {
+                
+                curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()))
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
+                            .anchor(0.5f, 0.5f));
+
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), DEFAULT_MAP_HEIGHT),
+                        new GoogleMap.CancelableCallback() {
+                            @Override
+                            public void onFinish() {
+                                navigation.setVisibility(View.VISIBLE);
+                                btnShare.setVisibility(View.VISIBLE);
+                                btnSelectType.setVisibility(View.VISIBLE);
+                                layoutIntro.setVisibility(View.GONE);
+                                searchByVoice.setVisibility(View.VISIBLE);
+                                btnCorona.setVisibility(View.VISIBLE);
+                                btnTraffic.setVisibility(View.VISIBLE);
+                                if(isFindingPath) searchByVoice.setVisibility(View.GONE);
+                            }
+
+                            @Override
+                            public void onCancel() {
+
+                            }
+                        });
+                moveCamera = false;
+            }
+
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER , 1000, 0, mLocationListener);
             isSetLocationListener = true;
         } else if (lastLocation != null) {
             if (curLocationMarker == null) {
