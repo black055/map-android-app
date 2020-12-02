@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import com.example.map_application.R;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -33,12 +35,17 @@ public class NearbyLocationSearch extends AsyncTask<Object, String, String> {
     private String googlePlacesData;
     private GoogleMap mMap;
 
-    public NearbyLocationSearch(Context context, double lat, double lng, String type, BitmapDescriptor markerIcon) {
+    private ArrayList<Marker> markersToRemove;
+    private ArrayList<Circle> circlesToRemove;
+
+    public NearbyLocationSearch(Context context, double lat, double lng, String type, BitmapDescriptor markerIcon, ArrayList<Marker> markersToRemove, ArrayList<Circle> circlesToRemove) {
         this.context = context;
         this.lat = lat;
         this.lng = lng;
         this.type = type;
         this.markerIcon = markerIcon;
+        this.markersToRemove = markersToRemove;
+        this.circlesToRemove = circlesToRemove;
     }
 
     String getURL(double lat, double lng, String type) {
@@ -86,20 +93,20 @@ public class NearbyLocationSearch extends AsyncTask<Object, String, String> {
     }
 
     private void showNearbyPlaceOnMap(List<HashMap<String, String>> places) {
-        mMap.addCircle(new CircleOptions()
-                .center(new LatLng(lat, lng)).radius(RADIUS)
-                .strokeWidth(0)
-                .strokeColor(Color.parseColor("#225595EC"))
-                .fillColor(Color.parseColor("#225595EC")));
+        circlesToRemove.add(mMap.addCircle(new CircleOptions()
+                                .center(new LatLng(lat, lng)).radius(RADIUS)
+                                .strokeWidth(0)
+                                .strokeColor(Color.parseColor("#225595EC"))
+                                .fillColor(Color.parseColor("#225595EC"))));
 
         for (int i = 0; i < places.size(); i++) {
             HashMap<String, String> place = places.get(i);
             String name = place.get("name"), vicinity = place.get("vicinity");
             double lat = Double.parseDouble(place.get("lat")), lng = Double.parseDouble(place.get("lng"));
 
-            mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng))
-                                                              .title(name + " : " + vicinity)
-                                                              .icon(markerIcon));
+            markersToRemove.add(mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng))
+                                                                  .title(name + " : " + vicinity)
+                                                                  .icon(markerIcon)));
         }
     }
 }

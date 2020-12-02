@@ -53,6 +53,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -79,6 +80,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -118,7 +120,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private EditText edtOrigin, edtDestination;
     private TextView tvDuration, tvDistance;
     private LinearLayout llFindPath;
-    private List<Polyline> polylinePaths = new ArrayList<>();
     private boolean isFindingPath;
     private String travelMode;
     private ImageView ivSetOriginByCurrentPosition;
@@ -187,6 +188,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     boolean isSetLocationListener;
     boolean moveCamera;
     boolean isHome;
+
+    private ArrayList<Marker> markersToRemove;
+    private ArrayList<Polyline> polylinesToRemove;
+    private ArrayList<Circle> circlesToRemove;
 
     // Convert a view to bitmap
     public static Bitmap createDrawableFromView(Context context, View view) {
@@ -363,6 +368,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         markerIcons.put("restaurant", R.drawable.restaurant_marker);
         markerIcons.put("school", R.drawable.school_marker);
 
+        markersToRemove = new ArrayList<>();
+        polylinesToRemove = new ArrayList<>();
+        circlesToRemove = new ArrayList<>();
+
         setActionListener();
     }
 
@@ -400,7 +409,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                     if (!isHome) {
                         if (mMap != null) {
-                        mMap.clear();
+                        clearMap();
                         if (lastLocation != null) {
                             curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()))
                                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
@@ -440,7 +449,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     isFindingPath = true;
 
                     if (isCheckingCorona) {
-                        mMap.clear();
+                        clearMap();
                         isCheckingCorona = false;
                     }
 
@@ -458,7 +467,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     searchByVoice.setVisibility(View.VISIBLE);
                     llFindPath.setVisibility(View.GONE);
                     if (isCheckingCorona) {
-                        mMap.clear();
+                        clearMap();
                         isCheckingCorona = false;
                     }
                     edtOrigin.setText("");
@@ -479,7 +488,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 case R.id.favorite:
                     isHome = false;
                     if (isCheckingCorona) {
-                        mMap.clear();
+                        clearMap();
                         getCurrentLocation();
                         isCheckingCorona = false;
                     }
@@ -492,7 +501,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     isHome = false;
                     isFindingPath = false;
                     if (isCheckingCorona) {
-                        mMap.clear();
+                        clearMap();
                         getCurrentLocation();
                         isCheckingCorona = false;
                     }
@@ -531,7 +540,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                         if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                             searchByVoice.setVisibility(View.GONE);
-                            mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
+                            markersToRemove.add(mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM")));
                             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT)
                                     , new GoogleMap.CancelableCallback() {
                                         @Override
@@ -556,7 +565,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     @Override
                     public void onPermissionDenied(PermissionDeniedResponse response) {
                         searchByVoice.setVisibility(View.GONE);
-                        mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM"));
+                        markersToRemove.add(mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Đại học Khoa học tự nhiên - ĐHQG TPHCM")));
                         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT)
                                 , new GoogleMap.CancelableCallback() {
                             @Override
@@ -629,9 +638,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             isSetLocationListener = true;
         } else if (lastLocation != null) {
             if (curLocationMarker == null) {
+                Toast.makeText(MapsActivity.this, "a", Toast.LENGTH_SHORT).show();
                 curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()))
                         .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
                         .anchor(0.5f, 0.5f));
+            } else {
+                Toast.makeText(MapsActivity.this, "b", Toast.LENGTH_SHORT).show();
+                curLocationMarker.setPosition(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()));
             }
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), DEFAULT_MAP_HEIGHT));
         }
@@ -647,7 +660,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 getCurrentLocation();
                 searchByVoice.setVisibility(View.VISIBLE);
-                isCheckingCorona = false;
+                if (isCheckingCorona) {
+                    clearMap();
+                    isCheckingCorona = false;
+                }
             }
         });
 
@@ -841,10 +857,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (lastLocation != null) {
                     String type = "";
                     LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
-                    mMap.clear();
-                    curLocationMarker = mMap.addMarker(new MarkerOptions().position(current)
-                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
-                            .anchor(0.5f, 0.5f));
+                    clearMap();
+                    if (curLocationMarker != null) {
+                        curLocationMarker = mMap.addMarker(new MarkerOptions().position(current)
+                                .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
+                                .anchor(0.5f, 0.5f));
+                    }
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), DEFAULT_MAP_HEIGHT));
                     
                     switch (item.getItemId()) {
@@ -878,7 +896,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     {
                         NearbyLocationSearch searcher = new NearbyLocationSearch(getApplicationContext(),
                                 lastLocation.getLatitude(), lastLocation.getLongitude(), type,
-                                bitmapDescriptorFromVector(MapsActivity.this, markerIcons.get(type)));
+                                bitmapDescriptorFromVector(MapsActivity.this, markerIcons.get(type)), markersToRemove, circlesToRemove);
                         searcher.execute(mMap);
                     }
                     return true;
@@ -1024,17 +1042,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onDirectionFinderStart() {
         //Xóa polyline cũ
-        if (polylinePaths != null) {
-            for (Polyline polyline : polylinePaths) {
-                polyline.remove();
-            }
+        for (Iterator<Polyline> it = polylinesToRemove.iterator(); it.hasNext(); ) {
+            Polyline polyline = it.next();
+            it.remove();
+            polyline.remove();
         }
     }
 
     @Override
     public void onDirectionFinderSuccess(List<Route> routes, boolean isFindingSubRoute) {
-        //Cấp phát cho polyline (tập hợp các điểm trên đường đi)
-        polylinePaths = new ArrayList<>();
 
         // Không tìm được routes từ google api cấp
         if (routes.size() == 0) {
@@ -1044,8 +1060,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
 
-        //Xóa các marker trên bản đồ
-        mMap.clear();
+        //Xóa các markers, polylines, circles trên bản đồ
+        clearMap();
         //Chuyển camera tới vị trí bắt đầu
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(routes.get(0).startLocation, 15));
 
@@ -1065,14 +1081,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             isFindFromCurrentLocation = false;
         }
         else {
-            mMap.addMarker(new MarkerOptions()
+            markersToRemove.add(mMap.addMarker(new MarkerOptions()
                     .icon(bitmapDescriptorFromVector(MapsActivity.this, R.drawable.ic_position_start))
                     .title(route.startAddress)
-                    .position(route.startLocation));
+                    .position(route.startLocation)));
         }
-        mMap.addMarker(new MarkerOptions()
+        markersToRemove.add(mMap.addMarker(new MarkerOptions()
                 .title(route.endAddress)
-                .position(route.endLocation));
+                .position(route.endLocation)));
 
         //Xử lý nếu có tuyến phụ
         if (routes.size() > 1) {
@@ -1087,7 +1103,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             for (int i = 0; i < subRoute.points.size(); i++)
                 subPolylineOptions.add(subRoute.points.get(i));
             //vẽ đường đi giữa 2 điểm
-            polylinePaths.add(mMap.addPolyline(subPolylineOptions));
+            polylinesToRemove.add(mMap.addPolyline(subPolylineOptions));
         }
         
         //Tạo polyline để vẽ tuyến chính
@@ -1101,7 +1117,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         for (int i = 0; i < route.points.size(); i++)
             polylineOptions.add(route.points.get(i));
         //vẽ đường đi giữa 2 điểm
-        polylinePaths.add(mMap.addPolyline(polylineOptions));
+        polylinesToRemove.add(mMap.addPolyline(polylineOptions));
     }
 
     private void sendRequest(boolean subRoute) {
@@ -1183,7 +1199,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             dbManager.HISTORY_addPlace(new PlaceObject(place.getName(), place.getAddress(), place.getLatLng()));
 
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatLng(), DEFAULT_MAP_HEIGHT));
-            mMap.addMarker(new MarkerOptions().position(place.getLatLng()).title(place.getAddress()));
+            markersToRemove.add(mMap.addMarker(new MarkerOptions().position(place.getLatLng()).title(place.getAddress())));
         }
 
         if (resultCode == RESULT_OK && requestCode == RQCODE_FROM_FAVORITE && data != null) {
@@ -1198,9 +1214,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             });
             searchLocation.setText(place.getName());
-            mMap.clear();
+            clearMap();
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatlong(), DEFAULT_MAP_HEIGHT));
-            mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress()));
+            markersToRemove.add(mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress())));
             nameLocation.setText(place.getName());
             addressLocation.setText(place.getAddress());
             phoneLocation.setVisibility(View.GONE);
@@ -1222,9 +1238,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             });
             searchLocation.setText(place.getName());
-            mMap.clear();
+            clearMap();
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place.getLatlong(), DEFAULT_MAP_HEIGHT));
-            mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress()));
+            markersToRemove.add(mMap.addMarker(new MarkerOptions().position(place.getLatlong()).title(place.getAddress())));
             nameLocation.setText(place.getName());
             addressLocation.setText(place.getAddress());
             phoneLocation.setVisibility(View.GONE);
@@ -1277,9 +1293,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
         dbManager.HISTORY_addPlace(new PlaceObject(result[0], result[1], new LatLng(Double.parseDouble(result[2]), Double.parseDouble(result[3]))));
-        mMap.clear();
+        clearMap();
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(Double.parseDouble(result[2]), Double.parseDouble(result[3])), DEFAULT_MAP_HEIGHT));
-        mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(result[2]), Double.parseDouble(result[3]))).title(result[1]));
+        markersToRemove.add(mMap.addMarker(new MarkerOptions().position(new LatLng(Double.parseDouble(result[2]), Double.parseDouble(result[3]))).title(result[1])));
 
     }
 
@@ -1293,7 +1309,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         lngCountry = (ArrayList<String>) Countries.get(5);
         countryCode = (ArrayList<String>) Countries.get(6);
         isCheckingCorona = true;
-        mMap.clear();
+        clearMap();
         final ArrayList<MarkerOptions> non_text = new ArrayList<>();
         final ArrayList<MarkerOptions> with_text = new ArrayList<>();
 
@@ -1344,9 +1360,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         boolean isInit = true;
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), 3.0f));
-        mMap.clear();
+        clearMap();
         for(int i = 0; i < non_text.size(); ++i) {
-            mMap.addMarker(non_text.get(i));
+            markersToRemove.add(mMap.addMarker(non_text.get(i)));
         }
         isInit = false;
 
@@ -1408,16 +1424,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (!finalIsInit) {
                     CameraPosition cameraPosition = mMap.getCameraPosition();
                     if(cameraPosition.zoom >= 3.5 && cameraPosition.zoom < 6 && changeType && isCheckingCorona) {
-                        mMap.clear();
+                        clearMap();
                         for (int i = 0; i < with_text.size(); ++i) {
-                            mMap.addMarker(with_text.get(i));
+                            markersToRemove.add(mMap.addMarker(with_text.get(i)));
                         }
                         changeType = false;
                     }
                     else if (cameraPosition.zoom < 3.5 && !changeType && isCheckingCorona) {
-                        mMap.clear();
+                        clearMap();
                         for (int i = 0; i < non_text.size(); ++i) {
-                            mMap.addMarker(non_text.get(i));
+                            markersToRemove.add(mMap.addMarker(non_text.get(i)));
                         }
                         changeType = true;
                     }
@@ -1512,6 +1528,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     isFindFromCurrentLocation = true;
                 sendRequest(true);
             }
+        }
+    }
+
+    private void clearMap() {
+        for (Iterator<Marker> it = markersToRemove.iterator(); it.hasNext(); ) {
+            Marker marker = it.next();
+            it.remove();
+            marker.remove();
+        }
+        for (Iterator<Polyline> it = polylinesToRemove.iterator(); it.hasNext(); ) {
+            Polyline polyline = it.next();
+            it.remove();
+            polyline.remove();
+        }
+        for (Iterator<Circle> it = circlesToRemove.iterator(); it.hasNext(); ) {
+            Circle circle = it.next();
+            it.remove();
+            circle.remove();
         }
     }
 }
