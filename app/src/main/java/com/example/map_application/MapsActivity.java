@@ -411,20 +411,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         if (mMap != null) {
                         clearMap();
                         if (lastLocation != null) {
-                            curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()))
-                                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
-                                    .anchor(0.5f, 0.5f));
+                            if (curLocationMarker != null) {
+                                curLocationMarker.setPosition(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()));
+                            } else {
+                                curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()))
+                                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
+                                        .anchor(0.5f, 0.5f));
+                            }
                             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), DEFAULT_MAP_HEIGHT));
-                        } else {
-                            curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(defaultLocation.latitude, defaultLocation.longitude))
-                                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
-                                    .anchor(0.5f, 0.5f));
-                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, DEFAULT_MAP_HEIGHT));
                         }
                         }
                         isHome = true;
                     }
 
+                    searchLocation.setText("");
                     llFindPath.setVisibility(View.GONE);
                     edtOrigin.setText("");
                     edtDestination.setText("");
@@ -607,7 +607,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             // Kiểm tra xem có vị trí hiện tại sẵn không?
             lastLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             if (lastLocation != null) {
-                
+
+                if (curLocationMarker != null) {
+                    curLocationMarker.setPosition(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()));
+                }
                 curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()))
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
                             .anchor(0.5f, 0.5f));
@@ -638,12 +641,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             isSetLocationListener = true;
         } else if (lastLocation != null) {
             if (curLocationMarker == null) {
-                Toast.makeText(MapsActivity.this, "a", Toast.LENGTH_SHORT).show();
                 curLocationMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()))
                         .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
                         .anchor(0.5f, 0.5f));
             } else {
-                Toast.makeText(MapsActivity.this, "b", Toast.LENGTH_SHORT).show();
                 curLocationMarker.setPosition(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()));
             }
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), DEFAULT_MAP_HEIGHT));
@@ -858,7 +859,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     String type = "";
                     LatLng current = new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude());
                     clearMap();
-                    if (curLocationMarker != null) {
+                    if (curLocationMarker == null) {
                         curLocationMarker = mMap.addMarker(new MarkerOptions().position(current)
                                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.current_location))
                                 .anchor(0.5f, 0.5f));
@@ -1438,7 +1439,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-        if(isCheckingCorona) {
+        if(isCheckingCorona && !marker.equals(curLocationMarker)) {
             BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(MapsActivity.this, R.style.BottomSheetDialogTheme);
             View bottomSheetView = LayoutInflater.from(getApplicationContext()).inflate(R.layout.show_corona_info, null);
             TextView tvName, tvCases, tvDead, tvRecovered;
