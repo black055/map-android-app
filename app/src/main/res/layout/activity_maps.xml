@@ -150,18 +150,20 @@
         app:srcCompat="@drawable/ic_outline_traffic_24"
         tools:ignore="MissingConstraints,VectorDrawableCompat" />
 
-    <ImageView
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnCurLocation"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="36dp"
-        android:background="@drawable/current_location_background"
-        android:src="@drawable/ic_baseline_gps_fixed_24"
+        android:layout_gravity="top|right"
+        app:backgroundTint="#FFFFFF"
+        app:srcCompat="@drawable/ic_baseline_gps_fixed_24"
         app:layout_constraintBottom_toTopOf="@+id/infoLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.018"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="VectorDrawableCompat" />
 
     <LinearLayout
         android:id="@+id/infoLayout"
@@ -236,6 +238,8 @@
                 android:background="@drawable/add_fav_background"
                 android:paddingLeft="20dp"
                 android:paddingRight="20dp"
+                android:paddingTop="20dp"
+                android:paddingBottom="20dp"
                 android:text="Thêm vào danh sách"
                 android:textColor="#FFFFFF"
                 android:textSize="10sp"
@@ -249,6 +253,8 @@
                 android:background="@drawable/add_fav_background"
                 android:paddingLeft="20dp"
                 android:paddingRight="20dp"
+                android:paddingTop="20dp"
+                android:paddingBottom="20dp"
                 android:text="Hiển thị đường đi"
                 android:textColor="#FFFFFF"
                 android:textSize="10sp"
@@ -425,7 +431,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#FFFFFF"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

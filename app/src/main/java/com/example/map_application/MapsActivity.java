@@ -1,4 +1,4 @@
-package com.example.map_application;
+ package com.example.map_application;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -133,7 +133,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Location lastLocation;  // Vị trị hiện tại được định vị
     private LatLng defaultLocation; // Vị trí mặc định
     private EditText searchLocation;    // EditText tìm địa điểm
-    private ImageView btnCurLocation;   // Button định vị vị trí hiện tại
+    private FloatingActionButton btnCurLocation;   // Button định vị vị trí hiện tại
     private FloatingActionButton btnShare;  // Button chia sẻ vị trí hiện tại của bản
 
     // Component cho chức năng chọn loại bản đồ
@@ -666,6 +666,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (isCheckingCorona || isFindingPath || isFindFromCurrentLocation) {
                     clearMap();
                     isCheckingCorona = false;
+                    isFindFromCurrentLocation = false;
+                    isFindingPath = false;
                 }
             }
         });
@@ -945,6 +947,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 else
                 {
+                    if (isFindingPath) {
+                        llFindPath.setVisibility(View.GONE);
+                        isFindingPath = false;
+                        navigation.setSelectedItemId(R.id.home);
+                    }
                     progressDialog = new ProgressDialog(MapsActivity.this);
                     progressDialog.show();
                     progressDialog.setContentView(R.layout.progress_dialog);
