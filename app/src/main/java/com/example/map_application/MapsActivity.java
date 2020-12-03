@@ -148,6 +148,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private LinearLayout informationLocation;
     private TextView nameLocation, phoneLocation, ratingLocation, addressLocation, priceLevel;
     private Button btnAddFav;
+    private ImageView btnClose;
     private boolean isGoBack;   // biến check khi nhấn back button
 
     // Data base
@@ -319,6 +320,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         addressLocation = findViewById(R.id.address);
         priceLevel = findViewById(R.id.price_level);
         btnAddFav = informationLocation.findViewById(R.id.btnAddFav);
+        btnClose = informationLocation.findViewById(R.id.btnClose);
 
         layoutIntro = findViewById(R.id.layoutIntro);
         // Corona virus
@@ -424,7 +426,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         isHome = true;
                     }
 
-                    searchLocation.setText("");
                     llFindPath.setVisibility(View.GONE);
                     edtOrigin.setText("");
                     edtDestination.setText("");
@@ -659,9 +660,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (informationLocation.getVisibility() == LinearLayout.VISIBLE) {
                     informationLocation.setVisibility(LinearLayout.GONE);
                 }
+                searchLocation.setText("");
                 getCurrentLocation();
                 searchByVoice.setVisibility(View.VISIBLE);
-                if (isCheckingCorona) {
+                if (isCheckingCorona || isFindingPath || isFindFromCurrentLocation) {
                     clearMap();
                     isCheckingCorona = false;
                 }
@@ -1025,6 +1027,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 edtOrigin.setText("Vị trí hiện tại");
                 searchByVoice.setVisibility(View.GONE);
+            }
+        });
+
+        btnClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                informationLocation.setVisibility(View.GONE);
             }
         });
     }
