@@ -357,6 +357,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         searchByVoice.setVisibility(View.GONE);
         btnCorona.setVisibility(View.GONE);
         btnTraffic.setVisibility(View.GONE);
+        btnCurLocation.setVisibility(View.GONE);
         isGoBack = false;
         isHome = false;
 
@@ -551,6 +552,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                             btnSelectType.setVisibility(View.VISIBLE);
                                             layoutIntro.setVisibility(View.GONE);
                                             searchByVoice.setVisibility(View.VISIBLE);
+                                            btnCurLocation.setVisibility(View.VISIBLE);
                                             if(isFindingPath) searchByVoice.setVisibility(View.GONE);
                                         }
 
@@ -576,6 +578,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 btnSelectType.setVisibility(View.VISIBLE);
                                 layoutIntro.setVisibility(View.GONE);
                                 searchByVoice.setVisibility(View.VISIBLE);
+                                btnCurLocation.setVisibility(View.VISIBLE);
                                 if(isFindingPath) searchByVoice.setVisibility(View.GONE);
                             }
 
@@ -627,6 +630,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 searchByVoice.setVisibility(View.VISIBLE);
                                 btnCorona.setVisibility(View.VISIBLE);
                                 btnTraffic.setVisibility(View.VISIBLE);
+                                btnCurLocation.setVisibility(View.VISIBLE);
                                 if(isFindingPath) searchByVoice.setVisibility(View.GONE);
                             }
 
